@@ -29,7 +29,11 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // The renderer shows the version in a few places. Passing it as an
+      // argument lets preload expose it synchronously, so nothing has to
+      // render a placeholder while an IPC round-trip resolves.
+      additionalArguments: [`--app-version=${app.getVersion()}`]
     }
   });
 

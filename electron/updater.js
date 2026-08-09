@@ -10,13 +10,17 @@ autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
 let mainWindow = null;
+// Whether the check in flight was started by the app rather than the user.
+// A background check that fails is not something the user asked about or can
+// act on, so its failure stays in the log.
+let silentCheck = false;
 
 function init({ getWin }, ipcMain) {
   mainWindow = getWin;
 
   // Check for updates on app start (after 3 seconds)
   setTimeout(() => {
-    checkForUpdates();
+    checkForUpdates({ silent: true });
   }, 3000);
 
   // IPC handlers
@@ -30,7 +34,7 @@ function init({ getWin }, ipcMain) {
       return { ok: true };
     } catch (error) {
       log.error('Download error:', error);
-      return { ok: false, error: error.message };
+      return { ok: false, error: friendlyError(error) };
     }
   });
 
@@ -56,7 +60,7 @@ function init({ getWin }, ipcMain) {
 
   autoUpdater.on('error', (err) => {
     log.error('Update error:', err);
-    sendStatus({ type: 'error', message: err.message });
+    if (!silentCheck) sendStatus({ type: 'error', message: friendlyError(err) });
   });
 
   autoUpdater.on('download-progress', (progress) => {
@@ -74,7 +78,8 @@ function init({ getWin }, ipcMain) {
   });
 }
 
-async function checkForUpdates() {
+async function checkForUpdates({ silent = false } = {}) {
+  silentCheck = silent;
   try {
     const result = await autoUpdater.checkForUpdates();
     return {
@@ -85,8 +90,20 @@ async function checkForUpdates() {
     };
   } catch (error) {
     log.error('Check for updates error:', error);
-    return { ok: false, error: error.message };
+    return { ok: false, error: friendlyError(error) };
+  } finally {
+    // Cleared so a later download failure is still reported, since a download
+    // only ever starts because the user pressed the button.
+    silentCheck = false;
   }
+}
+
+// electron-updater puts the whole HTTP response into err.message: the request
+// line, every response header, and Set-Cookie. Only the first line means
+// anything to a user, and the session cookie has no business on screen.
+function friendlyError(error) {
+  const first = String(error?.message ?? '').split('\n')[0].trim();
+  return first || 'Unknown error';
 }
 
 function sendStatus(status) {

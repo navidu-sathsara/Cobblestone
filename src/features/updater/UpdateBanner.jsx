@@ -82,12 +82,19 @@ export default function UpdateBanner() {
 
       {status.type === 'error' && (
         <>
-          <span className="update-banner__msg update-banner__msg--error">
-            Update check failed: {status.message}
+          <span className="update-banner__msg update-banner__msg--error" title={status.message}>
+            Update failed: {truncate(status.message)}
           </span>
           <button className="update-banner__btn" onClick={handleDismiss}>✕</button>
         </>
       )}
     </div>
   );
+}
+
+// Main already strips the response headers, but a single line can still be
+// long enough to push the dismiss button off the banner.
+function truncate(message, max = 120) {
+  const text = String(message ?? '').trim() || 'Unknown error';
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }

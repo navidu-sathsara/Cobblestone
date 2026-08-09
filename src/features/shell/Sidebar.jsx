@@ -23,6 +23,8 @@ const NAV = [
 ];
 
 export default function Sidebar({ active = 'play', locked = false, onNavigate = () => {} }) {
+  const version = window.native?.version;
+
   return (
     <aside className={`sidebar${locked ? ' sidebar--locked' : ''}`}>
       <div className="sidebar-logo">
@@ -59,7 +61,7 @@ export default function Sidebar({ active = 'play', locked = false, onNavigate = 
         >
           <Settings size={21} />
         </button>
-        <span className="sidebar-version">v0.1.0</span>
+        {version && <span className="sidebar-version">v{version}</span>}
       </div>
     </aside>
   );

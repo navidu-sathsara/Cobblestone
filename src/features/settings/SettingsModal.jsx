@@ -371,7 +371,7 @@ export default function SettingsModal({ onClose = () => {} }) {
             <div className="sm-nav-footer">
               <img src={appIcon} alt="Native" className="sm-nav-logo" />
               <span>
-                Native 0.1.0
+                Native {window.native?.version ?? ''}
                 <small>{navigator.platform}</small>
               </span>
             </div>

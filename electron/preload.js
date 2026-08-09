@@ -1,6 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Set by main.js via webPreferences.additionalArguments.
+const versionArg = process.argv.find((arg) => arg.startsWith('--app-version='));
+
 contextBridge.exposeInMainWorld('native', {
+  version: versionArg ? versionArg.slice('--app-version='.length) : null,
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),

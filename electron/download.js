@@ -3,10 +3,11 @@ const path = require('path');
 const crypto = require('crypto');
 const { Readable, Transform } = require('stream');
 const { pipeline } = require('stream/promises');
+const { app } = require('electron');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const DEFAULT_HEADERS = {
-  'User-Agent': 'NativeLauncher/0.1.0 (https://github.com/native-launcher/native)'
+  'User-Agent': `NativeLauncher/${app.getVersion()} (https://github.com/navidu-sathsara/native)`
 };
 
 function retryableStatus(status) {
