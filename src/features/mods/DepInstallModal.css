@@ -311,6 +311,14 @@
 
 .dep-required { cursor: default; }
 
+/* Already on disk: shown for context, but dimmed so it doesn't read as pending. */
+.dep-installed {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.dep-installed:hover { border-color: var(--border); background: var(--bg-raise); }
+
 .dep-checkbox-input {
   position: absolute;
   width: 0;
@@ -327,6 +335,7 @@
 
 .dep-row:not(.dep-required) .dep-checkbox { color: var(--text-dim); }
 .dep-row:not(.dep-required):has(input:checked) .dep-checkbox { color: var(--accent); }
+.dep-row.dep-installed .dep-checkbox { color: var(--online); }
 
 .dep-icon {
   width: 34px;
@@ -373,6 +382,7 @@
 
 .dep-kind--required { background: var(--accent-soft); color: var(--accent); }
 .dep-kind--optional { background: var(--bg-panel); color: var(--text-dim); }
+.dep-kind--installed { background: rgba(53, 208, 127, 0.14); color: var(--online); }
 
 .dep-none {
   display: flex;

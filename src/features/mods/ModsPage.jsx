@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search, Download, Check, Loader2, Trash2, PackageOpen } from 'lucide-react';
 import Dropdown from '../../components/ui/Dropdown.jsx';
 import useInstalledMods from './useInstalledMods.js';
@@ -27,6 +27,8 @@ const CF_CLASS = { mod: 6, shader: 6552, resourcepack: 12, datapack: 6945 };
 // CurseForge sortField values
 const CF_SORT  = { downloads: 6, relevance: 2, newest: 1, updated: 3 };
 
+const PAGE_SIZE = 24;
+
 export const formatCount = (n) =>
   n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : `${n}`;
 
@@ -42,6 +44,13 @@ const normalizeCF = (mod) => ({
   versions:   [...new Set((mod.latestFilesIndexes ?? []).map((f) => f.gameVersion))].slice(-3).reverse(),
 });
 
+// Both providers can repeat a project across page boundaries when the ranking
+// shifts mid-scroll, and a repeat would collide on the React key.
+const appendUnique = (previous, incoming) => {
+  const seen = new Set(previous.map((item) => item.project_id));
+  return [...previous, ...incoming.filter((item) => !seen.has(item.project_id))];
+};
+
 export default function ModsPage({ store, onOpenMod = () => {}, onPackInstalled = () => {} }) {
   const { instances, selected, select } = store;
 
@@ -52,6 +61,10 @@ export default function ModsPage({ store, onOpenMod = () => {}, onPackInstalled 
   const [results,  setResults]  = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [depModal, setDepModal] = useState(null);
+  const [page,     setPage]     = useState(0);
+  const [more,     setMore]     = useState(false);
+  const [paging,   setPaging]   = useState(false);
+  const sentinelRef             = useRef(null);
 
   const { installed, busy, errors, install, remove } = useInstalledMods(selected);
 
@@ -59,36 +72,66 @@ export default function ModsPage({ store, onOpenMod = () => {}, onPackInstalled 
   const tabLabel     = TABS.find((t) => t.id === tab)?.label ?? 'content';
   const contentType  = tab === 'installed' ? 'mod' : tab;
 
-  // Search — Modrinth or CurseForge
+  // A new query/sort/tab/provider is a different feed, so paging starts over.
+  useEffect(() => { setPage(0); }, [query, sort, tab, provider]);
+
+  // Search — Modrinth or CurseForge. Page 0 replaces the feed; later pages append.
   useEffect(() => {
     if (tab === 'installed') return undefined;
+    const controller = new AbortController();
+    const first = page === 0;
+    if (first) setLoading(true); else setPaging(true);
+
     const timer = setTimeout(async () => {
-      setLoading(true);
       try {
+        const offset = page * PAGE_SIZE;
+        let batch;
         if (provider === 'modrinth') {
           const url =
-            `https://api.modrinth.com/v2/search?limit=24&index=${sort}` +
+            `https://api.modrinth.com/v2/search?limit=${PAGE_SIZE}&offset=${offset}&index=${sort}` +
             `&query=${encodeURIComponent(query)}` +
             `&facets=${encodeURIComponent(JSON.stringify([[`project_type:${tab}`]]))}`;
-          const data = await (await fetch(url)).json();
-          setResults(data.hits ?? []);
+          const data = await (await fetch(url, { signal: controller.signal })).json();
+          batch = data.hits ?? [];
         } else {
           const classId   = CF_CLASS[tab] ?? 6;
           const sortField = CF_SORT[sort]  ?? 6;
           const url =
             `https://api.curseforge.com/v1/mods/search` +
             `?gameId=432&classId=${classId}&searchFilter=${encodeURIComponent(query)}` +
-            `&sortField=${sortField}&sortOrder=desc&pageSize=24`;
-          const data = await (await fetch(url, { headers: cfHeaders })).json();
-          setResults((data.data ?? []).map(normalizeCF));
+            `&sortField=${sortField}&sortOrder=desc&pageSize=${PAGE_SIZE}&index=${offset}`;
+          const data = await (await fetch(url, { headers: cfHeaders, signal: controller.signal })).json();
+          batch = (data.data ?? []).map(normalizeCF);
         }
-      } catch {
-        setResults([]);
+        // A short page means the feed is exhausted, so the sentinel stops firing.
+        setMore(batch.length === PAGE_SIZE);
+        setResults((prev) => (first ? batch : appendUnique(prev, batch)));
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        setMore(false);
+        if (first) setResults([]);
+      } finally {
+        setLoading(false);
+        setPaging(false);
       }
-      setLoading(false);
-    }, query ? 350 : 0);
-    return () => clearTimeout(timer);
-  }, [query, sort, tab, provider]);
+    }, first && query ? 350 : 0);
+
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [query, sort, tab, provider, page]);
+
+  // Infinite scroll: advance a page when the sentinel below the grid comes into
+  // view. Re-observed on every dependency change because the node is remounted
+  // whenever the grid is replaced by the loading or empty state.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !more || loading || paging || tab === 'installed') return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) setPage((value) => value + 1); },
+      { rootMargin: '320px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [more, loading, paging, tab, results.length]);
 
   // Installed tab: combine persisted metadata with either provider's project API.
   useEffect(() => {
@@ -239,12 +282,27 @@ export default function ModsPage({ store, onOpenMod = () => {}, onPackInstalled 
             })}
           </div>
         )}
+
+        {tab !== 'installed' && !loading && results.length > 0 && (
+          <div className="mods-more" ref={sentinelRef}>
+            {paging ? (
+              <span className="mods-more-load">
+                <Loader2 size={16} className="spin" /> Loading more…
+              </span>
+            ) : more ? null : (
+              <span className="mods-more-end">
+                That’s all {results.length} {tabLabel.toLowerCase()}.
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {depModal && (
         <DepInstallModal
           mod={depModal.mod}
           instance={selected}
+          installed={installed}
           onClose={() => setDepModal(null)}
           onConfirm={async (selectedDeps, resolvedMod) => {
             setDepModal(null);

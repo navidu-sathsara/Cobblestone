@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Check,
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import Button from '../../components/ui/Button.jsx';
 import { LOADER_ICONS, PROVIDER_ICONS } from '../../lib/cfApi.js';
-import { getInstallPlan, isCurseForgeProject } from '../../lib/contentApi.js';
+import { getInstallPlan, isCurseForgeProject, projectKey } from '../../lib/contentApi.js';
 import './DepInstallModal.css';
 
 function formatBytes(bytes) {
@@ -32,11 +32,11 @@ function formatDate(value) {
     : date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function DepRow({ dep, checked, disabled, onChange }) {
+function DepRow({ dep, checked, disabled, installed, onChange }) {
   return (
-    <label className={`dep-row${disabled ? ' dep-required' : ''}`}>
+    <label className={`dep-row${disabled ? ' dep-required' : ''}${installed ? ' dep-installed' : ''}`}>
       <span className="dep-checkbox" aria-hidden="true">
-        {checked ? <CheckSquare size={16} /> : <Square size={16} />}
+        {installed ? <Check size={16} /> : checked ? <CheckSquare size={16} /> : <Square size={16} />}
       </span>
       <input
         type="checkbox"
@@ -54,16 +54,16 @@ function DepRow({ dep, checked, disabled, onChange }) {
       )}
       <span className="dep-info">
         <strong>{dep.title ?? dep.project_id}</strong>
-        <small>{dep.description || 'Additional library required by this mod'}</small>
+        <small>{installed ? 'Already installed on this instance' : dep.description || 'Additional library required by this mod'}</small>
       </span>
-      <span className={`dep-kind dep-kind--${disabled ? 'required' : 'optional'}`}>
-        {disabled ? 'Required' : 'Optional'}
+      <span className={`dep-kind dep-kind--${installed ? 'installed' : disabled ? 'required' : 'optional'}`}>
+        {installed ? 'Installed' : disabled ? 'Required' : 'Optional'}
       </span>
     </label>
   );
 }
 
-export default function DepInstallModal({ mod, instance, onClose, onConfirm }) {
+export default function DepInstallModal({ mod, instance, installed = {}, onClose, onConfirm }) {
   const [state, setState] = useState('loading');
   const [deps, setDeps] = useState([]);
   const [checked, setChecked] = useState({});
@@ -74,6 +74,12 @@ export default function DepInstallModal({ mod, instance, onClose, onConfirm }) {
   const compatibleTarget = Boolean(instance && instance.loader !== 'Vanilla');
   const provider = isCurseForgeProject(mod) ? 'curseforge' : 'modrinth';
   const providerName = provider === 'curseforge' ? 'CurseForge' : 'Modrinth';
+
+  // Read through a ref so a manifest update never re-runs the plan fetch: the
+  // install set only needs to know what was on disk when the dialog opened.
+  const installedRef = useRef(installed);
+  installedRef.current = installed;
+  const onDisk = (dep) => Boolean(installed[projectKey(dep)]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -87,8 +93,13 @@ export default function DepInstallModal({ mod, instance, onClose, onConfirm }) {
       setRelease(plan.release);
       setResolvedMod(plan.mainMod);
       setDeps(plan.dependencies);
+      // A required dependency that is already on disk stays unchecked — nothing to
+      // fetch. Fabric API pulled in by a second mod was re-downloading otherwise.
       setChecked(Object.fromEntries(
-        plan.dependencies.map((dep) => [dep.project_id, dep.type === 'required'])
+        plan.dependencies.map((dep) => [
+          dep.project_id,
+          dep.type === 'required' && !installedRef.current[projectKey(dep)]
+        ])
       ));
       setState('ready');
     }
@@ -113,9 +124,10 @@ export default function DepInstallModal({ mod, instance, onClose, onConfirm }) {
     setChecked((previous) => ({ ...previous, [projectId]: value }));
   const required = deps.filter((dep) => dep.type === 'required');
   const optional = deps.filter((dep) => dep.type === 'optional');
+  const satisfied = deps.filter(onDisk).length;
   const selectedDeps = useMemo(
-    () => deps.filter((dep) => checked[dep.project_id]),
-    [checked, deps]
+    () => deps.filter((dep) => checked[dep.project_id] && !installed[projectKey(dep)]),
+    [checked, deps, installed]
   );
   const installCount = selectedDeps.length + 1;
 
@@ -210,7 +222,12 @@ export default function DepInstallModal({ mod, instance, onClose, onConfirm }) {
               <section className="dep-dependencies">
                 <div className="dep-section-heading">
                   <span><Puzzle size={14} /> Dependencies</span>
-                  <small>{deps.length ? `${required.length} required · ${optional.length} optional` : 'None required'}</small>
+                  <small>
+                    {deps.length
+                      ? `${required.length} required · ${optional.length} optional` +
+                        (satisfied ? ` · ${satisfied} already installed` : '')
+                      : 'None required'}
+                  </small>
                 </div>
 
                 {deps.length === 0 ? (
@@ -220,14 +237,22 @@ export default function DepInstallModal({ mod, instance, onClose, onConfirm }) {
                 ) : (
                   <div className="dep-list">
                     {required.map((dep) => (
-                      <DepRow key={dep.project_id} dep={dep} checked disabled onChange={toggle} />
+                      <DepRow
+                        key={dep.project_id}
+                        dep={dep}
+                        checked={!onDisk(dep)}
+                        disabled
+                        installed={onDisk(dep)}
+                        onChange={toggle}
+                      />
                     ))}
                     {optional.map((dep) => (
                       <DepRow
                         key={dep.project_id}
                         dep={dep}
-                        checked={checked[dep.project_id] ?? false}
-                        disabled={false}
+                        checked={onDisk(dep) ? false : checked[dep.project_id] ?? false}
+                        disabled={onDisk(dep)}
+                        installed={onDisk(dep)}
                         onChange={toggle}
                       />
                     ))}

@@ -216,6 +216,7 @@ export default function ModDetailPage({
         <DepInstallModal
           mod={{ ...project, author }}
           instance={selected}
+          installed={installed}
           onClose={() => setShowDepModal(false)}
           onConfirm={async (selectedDeps, resolvedMod) => {
             setShowDepModal(false);
