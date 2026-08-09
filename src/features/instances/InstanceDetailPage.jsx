@@ -8,23 +8,12 @@ import {
 import useLauncher from '../launcher/useLauncher.js';
 import useInstalledMods from '../mods/useInstalledMods.js';
 import useSettings from '../settings/useSettings.js';
+import useIsInstalled from './useIsInstalled.js';
 import InstanceModal from './InstanceModal.jsx';
 import { timeAgo } from '../../lib/time.js';
 import { LOADER_ICONS } from '../../lib/cfApi.js';
 import { hydrateInstalledProjects } from '../../lib/contentApi.js';
 import './InstanceDetailPage.css';
-
-/** Check whether the vanilla version jar is on disk. Falls back to true in browser. */
-function useIsInstalled(version) {
-  const [installed, setInstalled] = useState(true);
-  useEffect(() => {
-    if (!version) return;
-    const api = window.native?.instance;
-    if (!api) return;
-    api.isInstalled(version).then(setInstalled).catch(() => setInstalled(true));
-  }, [version]);
-  return installed;
-}
 
 const TABS = [
   { id: 'content', label: 'Content', icon: PackageOpen },
@@ -381,7 +370,7 @@ export default function InstanceDetailPage({
   const { status, busy, launch, kill } = useLauncher();
   const { installed, remove } = useInstalledMods(instance);
   const { settings } = useSettings();
-  const isInstalled = useIsInstalled(instance?.version);
+  const isInstalled = useIsInstalled(instance, status);
 
   const [tab,     setTab]     = useState('content');
   const [editing, setEditing] = useState(false);

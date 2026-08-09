@@ -27,6 +27,16 @@ let launchInProgress = false;
 const fabricLoadersCache = new Map();
 let forgePromosCache = null;
 
+const PHASE_LABELS = {
+  assets: 'Verifying assets',
+  'assets-copy': 'Copying assets',
+  natives: 'Downloading natives',
+  classes: 'Downloading libraries',
+  'classes-custom': 'Downloading loader libraries',
+  'classes-maven-custom': 'Downloading loader libraries',
+  'version-jar': 'Downloading game jar'
+};
+
 function send(channel, payload) {
   const win = deps?.getWin();
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
@@ -96,10 +106,12 @@ async function resolveForge(mcVersion, requestedVersion = null) {
     const url = `https://maven.minecraftforge.net/net/minecraftforge/forge/${full}/forge-${full}-installer.jar`;
     await downloadFile(url, jarPath, {
       retries: 3,
-      onProgress: ({ percent, retrying, attempt }) => {
+      onProgress: ({ percent, received, total, retrying, attempt }) => {
         const detail = `Downloading Forge ${forgeVersion}${retrying ? ` — retry ${attempt}` : ''}`;
         setState('downloading', detail);
-        if (percent !== null) send('launcher:progress', { percent, detail });
+        if (percent !== null) {
+          send('launcher:progress', { percent, detail, phase: 'downloading', bytes: received, size: total });
+        }
       }
     });
   }
@@ -229,16 +241,50 @@ async function launch({ instance, account }) {
 function init(dependencies, ipcMain) {
   deps = dependencies;
 
-  // minecraft-launcher-core events -> renderer
+  // mclc reports file counts per phase; 'download-status' reports bytes for the
+  // file currently in flight. Neither alone is a size, so bytes are accumulated
+  // here: completed files are banked as each download finishes, and the in
+  // flight file is added on top. Reset per phase so a count doesn't carry over.
+  let phase = null;
+  let bankedBytes = 0;
+  let activeBytes = 0;
+  const inFlight = new Map();
+
+  const resetBytes = () => {
+    bankedBytes = 0;
+    activeBytes = 0;
+    inFlight.clear();
+  };
+
+  launcher.on('download-status', ({ name, type, current, total }) => {
+    if (type !== phase) return;
+    inFlight.set(name, current);
+    activeBytes = 0;
+    for (const value of inFlight.values()) activeBytes += value;
+    // A finished file is banked so its bytes survive the map being cleared.
+    if (total && current >= total) {
+      bankedBytes += current;
+      inFlight.delete(name);
+      activeBytes -= current;
+    }
+  });
+
   launcher.on('progress', (e) => {
+    if (e.type !== phase) {
+      phase = e.type;
+      resetBytes();
+    }
     const percent = e.total ? Math.round((e.task / e.total) * 100) : 0;
-    const label =
-      e.type === 'assets'
-        ? 'Verifying & downloading assets'
-        : e.type === 'natives'
-          ? 'Downloading natives'
-          : `Downloading ${e.type}`;
-    send('launcher:progress', { percent, detail: label });
+    send('launcher:progress', {
+      percent,
+      detail: PHASE_LABELS[e.type] ?? `Downloading ${e.type}`,
+      // 'assets' is mostly a SHA1 sweep of files already on disk, so it is
+      // reported as verifying rather than downloading.
+      phase: e.type === 'assets' ? 'verifying' : 'downloading',
+      task: e.task,
+      total: e.total,
+      bytes: bankedBytes + activeBytes
+    });
   });
 
   launcher.on('debug', (line) => send('launcher:log', String(line)));

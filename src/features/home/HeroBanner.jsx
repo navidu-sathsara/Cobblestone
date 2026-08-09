@@ -3,7 +3,8 @@ import { Download, ChevronDown, Check, Boxes, Square, AlertTriangle, Play, Loade
 import { useClickOutside } from '../../components/ui/Dropdown.jsx';
 import { LOADER_ICONS } from '../../lib/cfApi.js';
 import GlowPanel from '../../components/ui/GlowPanel.jsx';
-import useLauncher from '../launcher/useLauncher.js';
+import useLauncher, { formatBytes } from '../launcher/useLauncher.js';
+import useIsInstalled from '../instances/useIsInstalled.js';
 import './HeroBanner.css';
 
 const STATUS_TITLES = {
@@ -12,20 +13,6 @@ const STATUS_TITLES = {
   launching:   'Starting',
   running:     'Running'
 };
-
-/** True when the MC version jar is present on disk. Falls back to true in the browser. */
-function useIsInstalled(version) {
-  const [installed, setInstalled] = useState(true);
-
-  useEffect(() => {
-    if (!version) return;
-    const api = window.native?.instance;
-    if (!api) return;
-    api.isInstalled(version).then(setInstalled).catch(() => setInstalled(true));
-  }, [version]);
-
-  return installed;
-}
 
 export default function HeroBanner({
   store,
@@ -37,9 +24,9 @@ export default function HeroBanner({
   const { instances, selected, select, update } = store;
   const [open, setOpen] = useState(false);
   const menuRef = useClickOutside(() => setOpen(false));
-  const { status, detail, percent, launch, kill, busy } = useLauncher();
+  const { status, detail, percent, phase, task, total, bytes, size, launch, kill, busy } = useLauncher();
   const iconSrc = selected?.icon ?? LOADER_ICONS[selected?.loader] ?? null;
-  const installed = useIsInstalled(selected?.version);
+  const installed = useIsInstalled(selected, status);
 
   const handleLaunch = () => {
     if (!selected || busy) return;
@@ -59,6 +46,17 @@ export default function HeroBanner({
   const showInstall = !installed && !busy;
   const isError = status === 'error';
   const showProgress = ['preparing', 'downloading', 'launching'].includes(status);
+  const verifying = phase === 'verifying';
+
+  // Downloading shows how much has arrived; verifying is a checksum sweep of
+  // files already on disk, so it shows how many were checked instead.
+  const transferred = formatBytes(bytes);
+  const totalSize = formatBytes(size);
+  const stat = verifying
+    ? (total ? `${task ?? 0} / ${total} files` : null)
+    : transferred && totalSize
+      ? `${transferred} / ${totalSize}`
+      : transferred;
 
   const title = STATUS_TITLES[status]
     ?? (showInstall ? 'Install' : selected ? `Launch ${selected.version}` : 'Select Instance');
@@ -156,12 +154,15 @@ export default function HeroBanner({
 
         <div className={`hero-progress${showProgress ? '' : ' hero-progress--hidden'}`}>
           <div className="hero-progress-meta">
-            <span>{detail || STATUS_TITLES[status] || 'Preparing Minecraft…'}</span>
+            <span>
+              {detail || STATUS_TITLES[status] || 'Preparing Minecraft…'}
+              {stat && <em className="hero-progress-stat">{stat}</em>}
+            </span>
             <strong>{status === 'downloading' ? `${percent}%` : 'Working'}</strong>
           </div>
           <div className="hero-progress-track">
             <div
-              className={`hero-progress-fill${status === 'downloading' ? '' : ' indeterminate'}`}
+              className={`hero-progress-fill${status === 'downloading' ? '' : ' indeterminate'}${verifying ? ' hero-progress-fill--verify' : ''}`}
               style={status === 'downloading' ? { width: `${percent}%` } : undefined}
             />
           </div>

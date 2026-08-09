@@ -335,6 +335,19 @@
   color: #ffffff;
 }
 
+/* Byte/file counter, trailing the phase label on the same line. */
+.hero-progress-stat {
+  margin-left: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-progress-stat::before {
+  content: '·';
+  margin-right: 8px;
+}
+
 .hero-progress-track {
   height: 5px;
   overflow: hidden;
@@ -348,6 +361,13 @@
   background: linear-gradient(90deg, #18a84b, #38dc71);
   box-shadow: 0 0 14px rgba(56, 220, 113, 0.55);
   transition: width 0.25s ease;
+}
+
+/* Verifying is a checksum sweep, not a transfer — different colour so a long
+   assets pass doesn't read as a stalled download. */
+.hero-progress-fill--verify {
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+  box-shadow: 0 0 14px rgba(96, 165, 250, 0.5);
 }
 
 .hero-progress-fill.indeterminate {

@@ -27,6 +27,50 @@ function resolveInside(base, ...parts) {
 
 const instanceDir = (id) => resolveInside(instancesDir(), id);
 
+/**
+ * Whether a version's client jar is on disk.
+ *
+ * minecraft-launcher-core writes the jar under the *profile* directory, which
+ * for a modded instance is the loader profile (fabric-loader-<x>-<mc>), not the
+ * vanilla version. Checking only versions/<mc>/<mc>.jar therefore reports "not
+ * installed" for a fully installed Fabric or Forge instance, which is what put
+ * the Install button back on a ready instance.
+ *
+ * Loader profile names embed a loader version we don't know here, so the
+ * directory is matched by prefix and suffix instead.
+ */
+function isInstalled(version, loader) {
+  if (!version) return false;
+  const versionsDir = path.join(rootDir(), 'versions');
+
+  const hasJar = (name) => {
+    try {
+      return fs.existsSync(resolveInside(versionsDir, name, `${name}.jar`));
+    } catch {
+      return false; // name escaped the versions dir
+    }
+  };
+
+  if (hasJar(version)) return true;
+
+  const prefix = loader === 'Fabric' ? 'fabric-loader-' : loader === 'Forge' ? 'forge-' : null;
+  if (!prefix) return false;
+
+  try {
+    return fs
+      .readdirSync(versionsDir, { withFileTypes: true })
+      .some(
+        (entry) =>
+          entry.isDirectory() &&
+          entry.name.startsWith(prefix) &&
+          entry.name.endsWith(`-${version}`) &&
+          hasJar(entry.name)
+      );
+  } catch {
+    return false; // no versions dir yet
+  }
+}
+
 /* ── helpers ────────────────────────────────────────────────── */
 
 function getDirSize(dirPath) {
@@ -263,12 +307,7 @@ function init(dependencies, ipcMain) {
 
   ipcMain.handle('instance:recentServers', () => recentServers());
 
-  ipcMain.handle('instance:isInstalled', (_e, version) => {
-    const versionsDir = path.join(rootDir(), 'versions');
-    const versionDir = resolveInside(versionsDir, version);
-    const jar = resolveInside(versionDir, `${version}.jar`);
-    return fs.existsSync(jar);
-  });
+  ipcMain.handle('instance:isInstalled', (_e, version, loader) => isInstalled(version, loader));
 }
 
-module.exports = { init, resolveInside, cleanServerAddress, parseServerConnections };
+module.exports = { init, resolveInside, isInstalled, cleanServerAddress, parseServerConnections };
