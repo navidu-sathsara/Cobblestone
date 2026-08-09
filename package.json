@@ -4,7 +4,7 @@
   "desktopName": "Native",
   "version": "3.9.1",
   "description": "Native — a Minecraft launcher",
-  "homepage": "https://github.com/native-launcher/native",
+  "homepage": "https://github.com/navidu-sathsara/native",
   "author": {
     "name": "Native",
     "email": "native@example.com"
@@ -23,18 +23,19 @@
     "dist:win": "npm run bump && vite build && electron-builder --win",
     "dist:win:publish": "npm run bump && npm run release:ensure && vite build && electron-builder --win --publish always",
     "dist:linux": "npm run bump && vite build && electron-builder --linux",
+    "dist:mac": "npm run bump && vite build && electron-builder --mac",
     "build-release": "bash scripts/build-release.sh",
     "publish": "bash scripts/publish-update.sh",
     "release": "bash scripts/build-release.sh && bash scripts/publish-update.sh",
     "update-server": "node update-server.js"
   },
   "build": {
-    "appId": "com.native.launcher",
+    "appId": "app.nativelauncher.desktop",
     "productName": "Native",
     "publish": {
       "provider": "github",
       "owner": "navidu-sathsara",
-      "repo": "native-releases"
+      "repo": "native"
     },
     "directories": {
       "output": "release",
@@ -56,12 +57,35 @@
           ]
         }
       ],
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
       "icon": "buildResources/icon.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Native"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "buildResources/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "category": "public.app-category.games",
+      "identity": null
     },
     "linux": {
       "target": [
@@ -79,6 +103,7 @@
         }
       ],
       "icon": "buildResources/icon.png",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "category": "Game",
       "syncDesktopName": true,
       "synopsis": "A Minecraft launcher"

@@ -100,12 +100,15 @@ async function main() {
       return;
     }
     const names = draft.assets.map(a => a.name);
-    // An updater feed is only usable alongside its payload, so require both.
-    // Linux is checked only when linux artifacts are present, so a
-    // Windows-only release still publishes.
-    const required = ['latest.yml', `Native-Setup-${pkg.version}.exe`];
+    // A channel feed is only usable alongside its payload, so require both.
+    // Each platform is checked only when its artifacts are present, so a
+    // single-platform release still publishes.
+    const required = ['latest.yml', `Native-Setup-${pkg.version}-x64.exe`];
     if (names.some(n => n.endsWith('.AppImage') || n.endsWith('.deb'))) {
       required.push('latest-linux.yml');
+    }
+    if (names.some(n => n.endsWith('.dmg') || n.endsWith('.zip'))) {
+      required.push('latest-mac.yml');
     }
     const missing = required.filter(n => !names.includes(n));
     if (missing.length) {
