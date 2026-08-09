@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -L -o C:/Users/Atlas/Documents/native/src/assets/icons/curseforge.png https://www.curseforge.com/favicon.ico)",
+      "Bash(curl -s -L -o C:/Users/Atlas/Documents/native/src/assets/icons/mojang.png https://launcher.mojang.com/download/Minecraft_128x128.png)",
+      "Bash(curl -s \"https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/curseforge.svg\")",
+      "Bash(curl -s \"https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mojangs.svg\")",
+      "Bash(curl -s https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/curseforge.svg -o C:/Users/Atlas/Documents/native/src/assets/icons/curseforge.svg)"
+    ]
+  }
+}

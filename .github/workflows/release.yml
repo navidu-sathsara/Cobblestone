@@ -1,0 +1,137 @@
+name: Release
+
+# Two ways in:
+#   1. Actions -> Release -> Run workflow, pick a bump. CI bumps, tags, builds.
+#   2. Push a tag yourself (git tag v3.9.2 && git push --tags) to build that exact
+#      version without bumping.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump to apply before building
+        type: choice
+        default: patch
+        options: [patch, minor, major, none]
+  push:
+    tags: ['v*']
+
+# electron-builder authenticates with the built-in GITHUB_TOKEN. Because source
+# and artifacts share this repo, no PAT secret is needed.
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Bump once, centrally. If each matrix leg bumped, Windows and Linux would
+  # build different versions and land in different releases.
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      ref: ${{ steps.resolve.outputs.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Bump version
+        if: github.event_name == 'workflow_dispatch' && inputs.bump != 'none'
+        run: node scripts/bump-version.js ${{ inputs.bump }}
+
+      - name: Commit and tag
+        if: github.event_name == 'workflow_dispatch' && inputs.bump != 'none'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: release v$VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD --tags
+
+      - id: resolve
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # Build jobs must check out the bump commit, not the stale trigger SHA.
+          echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "building v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+
+      # Pre-creating the draft is what keeps the matrix from producing one
+      # release per OS: electron-builder reuses an existing draft, but two
+      # publishers that both find nothing will each create their own.
+      - name: Create draft release
+        run: node scripts/ensure-release.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: --win
+          - os: ubuntu-latest
+            platform: --linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Cache electron downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+            ~/AppData/Local/electron/Cache
+            ~/AppData/Local/electron-builder/Cache
+          key: ${{ matrix.os }}-electron-${{ hashFiles('package-lock.json') }}
+
+      - run: npm run build
+
+      # Deliberately not `npm run dist:*` - those bump the version, which must
+      # not happen here. prepare already set it.
+      - name: Package and publish
+        run: npx electron-builder ${{ matrix.platform }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Only runs if every matrix leg succeeded, so a half-built release is never
+  # flipped live.
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify assets and publish release
+        run: node scripts/ensure-release.js --publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          echo "published v${{ needs.prepare.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"

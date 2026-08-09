@@ -1,0 +1,115 @@
+/* ============================================================
+   NATIVE — THEME
+   Every color in the app lives here. Change these variables
+   to re-skin the entire launcher (login + home + everything).
+   Current theme: Redstone
+   ============================================================ */
+
+:root {
+  /* backgrounds */
+  --bg: #120b0c;
+  --bg-panel: #180e10;
+  --bg-raise: #261417;
+  --bg-sidebar: #0d0708;
+
+  /* hero / panel gradient (also used by splash + login) */
+  --panel-grad-1: #1e1012;
+  --panel-grad-2: #0c0607;
+
+  /* borders */
+  --border: #3d2126;
+
+  /* text */
+  --text: #f6eeee;
+  --text-dim: #a38b8e;
+
+  /* accent — redstone red */
+  --accent: #ff4133;
+  --accent-deep: #a31f1f;
+  --accent-soft: rgba(255, 65, 51, 0.18);
+  --accent-border: rgba(255, 65, 51, 0.45);
+  --on-accent: #ffffff;
+
+  /* success / online */
+  --online: #35d07f;
+
+  /* microsoft brand button */
+  --ms-blue-1: #35b6e9;
+  --ms-blue-2: #1e8fd5;
+
+  /* shape */
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+/* ─── Diamond ─────────────────────────────────────────────── */
+:root[data-theme='diamond'] {
+  --bg: #080e12;
+  --bg-panel: #0b1318;
+  --bg-raise: #131e24;
+  --bg-sidebar: #060b0e;
+  --panel-grad-1: #111b22;
+  --panel-grad-2: #060c10;
+  --border: #1a3040;
+  --text: #eaf6f9;
+  --text-dim: #7aa8b8;
+  --accent: #4dd9f3;
+  --accent-deep: #1a8fa3;
+  --accent-soft: rgba(77, 217, 243, 0.18);
+  --accent-border: rgba(77, 217, 243, 0.45);
+  --on-accent: #ffffff;
+}
+
+/* ─── Emerald ──────────────────────────────────────────────── */
+:root[data-theme='emerald'] {
+  --bg: #060f08;
+  --bg-panel: #0a150c;
+  --bg-raise: #111f14;
+  --bg-sidebar: #040c06;
+  --panel-grad-1: #0f1c11;
+  --panel-grad-2: #050d07;
+  --border: #183322;
+  --text: #eaf6ee;
+  --text-dim: #7aad8f;
+  --accent: #00d46a;
+  --accent-deep: #00803f;
+  --accent-soft: rgba(0, 212, 106, 0.18);
+  --accent-border: rgba(0, 212, 106, 0.45);
+  --on-accent: #ffffff;
+}
+
+/* ─── Gold ──────────────────────────────────────────────────── */
+:root[data-theme='gold'] {
+  --bg: #100d06;
+  --bg-panel: #161108;
+  --bg-raise: #22190d;
+  --bg-sidebar: #0c0a05;
+  --panel-grad-1: #1c1509;
+  --panel-grad-2: #0a0804;
+  --border: #352908;
+  --text: #f6f2e8;
+  --text-dim: #a8916e;
+  --accent: #ffc233;
+  --accent-deep: #a37200;
+  --accent-soft: rgba(255, 194, 51, 0.18);
+  --accent-border: rgba(255, 194, 51, 0.45);
+  --on-accent: #ffffff;
+}
+
+/* ─── Amethyst ──────────────────────────────────────────────── */
+:root[data-theme='amethyst'] {
+  --bg: #0c080f;
+  --bg-panel: #110c16;
+  --bg-raise: #1a1222;
+  --bg-sidebar: #08060b;
+  --panel-grad-1: #16101e;
+  --panel-grad-2: #08060f;
+  --border: #2d1f40;
+  --text: #f2eef8;
+  --text-dim: #9e86b8;
+  --accent: #bf88ff;
+  --accent-deep: #7a3db0;
+  --accent-soft: rgba(191, 136, 255, 0.18);
+  --accent-border: rgba(191, 136, 255, 0.45);
+  --on-accent: #ffffff;
+}

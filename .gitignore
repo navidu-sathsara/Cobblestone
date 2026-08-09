@@ -1,0 +1,23 @@
+node_modules/
+dist/
+release/
+
+# secrets
+electron-builder.env
+.env
+.env.*
+*.pem
+*.pfx
+
+# logs
+npm-debug.log*
+*.log
+
+# editor / scratch
+*.bak
+*.orig
+*.rej
+
+# os
+.DS_Store
+Thumbs.db

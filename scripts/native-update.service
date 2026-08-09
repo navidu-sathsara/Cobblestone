@@ -1,0 +1,15 @@
+[Unit]
+Description=Native Launcher update server
+After=network.target
+
+[Service]
+Type=simple
+User=panel
+WorkingDirectory=/home/panel/native
+ExecStart=/usr/bin/node update-server.js
+Restart=always
+RestartSec=3
+Environment=PORT=8800
+
+[Install]
+WantedBy=multi-user.target

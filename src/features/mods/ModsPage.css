@@ -1,0 +1,262 @@
+.mods {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- tabs ---------- */
+
+.mods-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ── Provider toggle (Modrinth / CurseForge) ─────────────── */
+
+.provider-toggle {
+  display: flex;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.provider-btn {
+  height: 28px;
+  padding: 0 9px;
+  gap: 5px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  transition: background 0.15s, opacity 0.15s;
+  opacity: 0.5;
+}
+
+.provider-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.provider-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: block;
+}
+
+.provider-btn.active {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  opacity: 1;
+}
+
+.provider-btn:not(.active):hover {
+  background: var(--bg-raise);
+  opacity: 0.8;
+}
+
+/* ── API key hint (shown when CF key not set) ─────────────── */
+
+.mods-apikey-hint {
+  gap: 14px;
+  text-align: center;
+}
+
+.mods-apikey-hint p {
+  font-size: 13px;
+  max-width: 340px;
+  line-height: 1.55;
+}
+
+/* ---------- search + filters ---------- */
+
+.mods-filters {
+  display: flex;
+  gap: 10px;
+}
+
+.mods-filter-dd {
+  width: 190px;
+}
+
+.mods-filter-instance {
+  width: 260px;
+}
+
+.mods-filter-dd .dropdown-trigger {
+  height: 42px;
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+}
+
+/* ---------- results ---------- */
+
+.mods-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 6px 20px 2px;
+}
+
+.mods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.mod-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--panel-grad-1), var(--panel-grad-2));
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.18s, filter 0.18s, transform 0.18s ease, box-shadow 0.18s;
+}
+
+.mod-card:hover {
+  filter: brightness(1.15);
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+}
+
+.mod-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--bg-raise);
+}
+
+.mod-icon-fallback {
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
+.mod-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mod-info strong {
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mod-info small {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mod-info small.mod-error {
+  color: var(--accent);
+}
+
+.mod-action {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-raise);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.mod-action:hover {
+  background: linear-gradient(90deg, var(--accent-deep), var(--accent));
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.mod-action.busy {
+  cursor: default;
+  color: var(--accent);
+}
+
+.mod-pack-pct {
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.mod-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mod-action.installed {
+  color: var(--online);
+  border-color: rgba(53, 208, 127, 0.4);
+}
+
+.mod-action.installed .mod-trash {
+  display: none;
+}
+
+.mod-action.installed:hover {
+  background: #e5484d;
+  border-color: #e5484d;
+  color: #fff;
+}
+
+.mod-action.installed:hover .mod-check {
+  display: none;
+}
+
+.mod-action.installed:hover .mod-trash {
+  display: block;
+}
+
+/* ---------- status / spinner ---------- */
+
+.mods-status {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
