@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { Client, Authenticator } = require('minecraft-launcher-core');
 const auth = require('./auth');
 const settingsMod = require('./settings');
@@ -46,6 +47,15 @@ const setState = (status, detail = '') => send('launcher:state', { status, detai
 
 const rootDir = () => path.join(deps.app.getPath('userData'), 'minecraft');
 const instanceDir = (id) => path.join(rootDir(), 'instances', id);
+
+function telemetryInstance(instance) {
+  return {
+    id: String(instance?.id || ''),
+    name: String(instance?.name || 'Minecraft'),
+    version: String(instance?.version || ''),
+    loader: String(instance?.loader || 'Vanilla')
+  };
+}
 
 /** Latest stable Fabric loader for a MC version -> installs its version profile, returns profile name. */
 async function resolveFabric(mcVersion, requestedVersion = null) {
@@ -125,6 +135,9 @@ async function launch({ instance, account }) {
   }
 
   launchInProgress = true;
+  const launchId = `mc-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`;
+  const instanceActivity = telemetryInstance(instance);
+  deps.telemetry?.track('minecraft_launch_requested', { launchId, instance: instanceActivity });
   try {
   const settings = settingsMod.get();
 
@@ -150,6 +163,7 @@ async function launch({ instance, account }) {
       });
     } catch (err) {
       setState('error', `Java setup failed: ${err.message}`);
+      deps.telemetry?.track('minecraft_launch_failed', { launchId, instance: instanceActivity, reason: `Java setup failed: ${err.message}` });
       return;
     }
   }
@@ -161,6 +175,7 @@ async function launch({ instance, account }) {
     authorization = await auth.getMclcAuth();
     if (!authorization) {
       setState('error', 'Microsoft session expired — please sign in again.');
+      deps.telemetry?.track('minecraft_launch_failed', { launchId, instance: instanceActivity, reason: 'Microsoft session expired' });
       return;
     }
   }
@@ -190,6 +205,7 @@ async function launch({ instance, account }) {
     }
   } catch (err) {
     setState('error', err.message);
+    deps.telemetry?.track('minecraft_launch_failed', { launchId, instance: instanceActivity, reason: err.message });
     return;
   }
 
@@ -200,6 +216,7 @@ async function launch({ instance, account }) {
     const child = await launcher.launch(opts);
     if (!child) {
       setState('error', 'Could not start the game process. Check the logs.');
+      deps.telemetry?.track('minecraft_launch_failed', { launchId, instance: instanceActivity, reason: 'Game process did not start' });
       return;
     }
     activeChild = child;
@@ -207,9 +224,13 @@ async function launch({ instance, account }) {
 
     let sawOutput = false;
     let childFailed = false;
+    let minecraftStartedAt = null;
+    let terminalEventSent = false;
     const markRunning = () => {
       if (!sawOutput) {
         sawOutput = true;
+        minecraftStartedAt = Date.now();
+        deps.telemetry?.track('minecraft_started', { launchId, instance: instanceActivity });
         setState('running', 'Minecraft is running');
         // launcher behavior once the game is up
         const win = deps.getWin();
@@ -229,11 +250,38 @@ async function launch({ instance, account }) {
       childFailed = true;
       clearTimeout(runningFallback);
       activeChild = null;
+      terminalEventSent = true;
+      if (minecraftStartedAt) {
+        deps.telemetry?.track('minecraft_stopped', {
+          launchId,
+          instance: instanceActivity,
+          startedAt: new Date(minecraftStartedAt).toISOString(),
+          playSeconds: Math.max(0, Math.round((Date.now() - minecraftStartedAt) / 1000)),
+          exitCode: -1,
+          reason: err.message
+        });
+      } else {
+        deps.telemetry?.track('minecraft_launch_failed', { launchId, instance: instanceActivity, reason: err.message });
+      }
       setState('error', `Minecraft process failed: ${err.message}`);
     });
     child.on('close', (code) => {
       clearTimeout(runningFallback);
       activeChild = null;
+      if (!terminalEventSent) {
+        terminalEventSent = true;
+        if (minecraftStartedAt) {
+          deps.telemetry?.track('minecraft_stopped', {
+            launchId,
+            instance: instanceActivity,
+            startedAt: new Date(minecraftStartedAt).toISOString(),
+            playSeconds: Math.max(0, Math.round((Date.now() - minecraftStartedAt) / 1000)),
+            exitCode: code
+          });
+        } else {
+          deps.telemetry?.track('minecraft_launch_failed', { launchId, instance: instanceActivity, reason: `Game exited before startup (${code})` });
+        }
+      }
       if (!childFailed) {
         setState('idle', code === 0 || code === null ? '' : `Game exited with code ${code}`);
       }
@@ -247,6 +295,7 @@ async function launch({ instance, account }) {
   } catch (err) {
     activeChild = null;
     setState('error', err.message);
+    deps.telemetry?.track('minecraft_launch_failed', { launchId, instance: instanceActivity, reason: err.message });
   }
   } finally {
     launchInProgress = false;

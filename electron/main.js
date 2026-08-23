@@ -11,6 +11,7 @@ const updaterMod = require('./updater');
 const instanceMod = require('./instance');
 const newsMod = require('./news');
 const serverPingMod = require('./serverPing');
+const telemetryMod = require('./telemetry');
 
 let win;
 const appIcon = path.join(__dirname, '..', 'icon.png');
@@ -90,7 +91,8 @@ ipcMain.handle('external:open', async (_event, value) => {
   await shell.openExternal(url.href);
 });
 
-gameLauncher.init({ app, getWin: () => win }, ipcMain);
+telemetryMod.init({ app, getWin: () => win, getLinkedNativeAccount: authMod.getLinkedNativeAccount }, ipcMain);
+gameLauncher.init({ app, getWin: () => win, telemetry: telemetryMod }, ipcMain);
 mods.init({ app }, ipcMain);
 authMod.init({ app, getWin: () => win }, ipcMain);
 settingsMod.init({ app }, ipcMain);
@@ -103,6 +105,7 @@ serverPingMod.init({ app }, ipcMain);
 
 app.whenReady().then(() => {
   app.setName('Native');
+  telemetryMod.startSession();
   createWindow();
   win.once('ready-to-show', () => win.show());
 
@@ -113,6 +116,8 @@ app.whenReady().then(() => {
     }
   });
 });
+
+app.on('before-quit', () => telemetryMod.endSession());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

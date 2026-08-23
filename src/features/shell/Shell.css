@@ -339,3 +339,16 @@
 .launcher-progress-spin {
   color: var(--accent);
 }
+
+@media (max-width: 1100px) {
+  .shell-main { padding-inline: 14px; }
+  .shell-top { padding-inline: 8px; gap: 8px; }
+  .shell-logo { padding-right: 8px; }
+  .shell-nav-divider { margin-inline: 7px; }
+  .shell-nav { gap: 2px; }
+  .shell-nav-item { height: 28px; padding-inline: 9px; font-size: 11px; }
+  .shell-nav-item-inner { gap: 5px; }
+  .shell-top-right { gap: 5px; }
+  .account-chip { gap: 7px; padding-right: 9px; }
+  .account-text small { display: none; }
+}

@@ -133,6 +133,12 @@ async function refreshNativeAccounts(data) {
   return data;
 }
 
+function getLinkedNativeAccount() {
+  const data = readAccounts();
+  const active = data.accounts.find(account => account.id === data.activeId && account.type === 'native' && account.nativeToken);
+  return active || [...data.accounts].reverse().find(account => account.type === 'native' && account.nativeToken) || null;
+}
+
 function microsoftAuthCode(authManager) {
   return new Promise((resolve, reject) => {
     const parent = deps?.getWin?.();
@@ -469,4 +475,4 @@ function init(dependencies, ipcMain) {
   });
 }
 
-module.exports = { init, getMclcAuth };
+module.exports = { init, getMclcAuth, getLinkedNativeAccount };

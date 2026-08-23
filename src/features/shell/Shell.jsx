@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Hammer, ChevronDown, Loader2,
-  Gamepad2, Boxes, Puzzle, Package, Globe, Newspaper, Settings
+  Gamepad2, Boxes, Puzzle, Package, Globe, Newspaper, Settings, UserRound
 } from 'lucide-react';
 import WindowControls from '../../components/WindowControls.jsx';
 import DownloadRing from '../../components/DownloadRing.jsx';
@@ -9,6 +9,7 @@ import { useClickOutside } from '../../components/ui/Dropdown.jsx';
 import appIcon from '../../../icon.png';
 import BottomBar from './BottomBar.jsx';
 import ProfilePanel from './ProfilePanel.jsx';
+import ProfilePage from './ProfilePage.jsx';
 import HomePage from '../home/HomePage.jsx';
 import InstancesPage from '../instances/InstancesPage.jsx';
 import InstanceDetailPage from '../instances/InstanceDetailPage.jsx';
@@ -42,7 +43,8 @@ const NAV = [
   { id: 'mods',      icon: Puzzle,        label: 'Mods' },
   { id: 'modpacks',  icon: Package,       label: 'Modpacks' },
   { id: 'servers',   icon: Globe,         label: 'Servers' },
-  { id: 'news',      icon: Newspaper,     label: 'News' }
+  { id: 'news',      icon: Newspaper,     label: 'News' },
+  { id: 'profile',   icon: UserRound,      label: 'Profile' }
 ];
 
 function ComingSoon({ label }) {
@@ -68,6 +70,7 @@ function initialNav() {
   }
   if (hash.startsWith('#modpacks')) return { page: 'modpacks' };
   if (hash.startsWith('#mods')) return { page: 'mods' };
+  if (hash.startsWith('#profile')) return { page: 'profile' };
   return { page: 'play' };
 }
 
@@ -226,6 +229,12 @@ export default function Shell({
             projectId={nav.id}
             onBack={() => setNav({ page: nav.from || 'mods' })}
             onPackInstalled={(id) => setNav({ page: 'instance', id })}
+          />
+        ) : page === 'profile' ? (
+          <ProfilePage
+            account={account}
+            onOpenInstance={(id) => setNav({ page: 'instance', id })}
+            onOpenAccounts={() => setProfileOpen(true)}
           />
         ) : (
           <ComingSoon label={PAGE_LABELS[page] ?? page} />

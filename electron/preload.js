@@ -82,6 +82,12 @@ contextBridge.exposeInMainWorld('native', {
   },
   server: {
     ping: (address) => ipcRenderer.invoke('server:ping', address)
+  },
+  telemetry: {
+    trackFetch: (payload) => ipcRenderer.send('telemetry:fetch', payload),
+    profile: () => ipcRenderer.invoke('telemetry:profile'),
+    flush: () => ipcRenderer.invoke('telemetry:flush'),
+    onUpdated: (callback) => subscribe('telemetry:updated', callback)
   }
 });
 
