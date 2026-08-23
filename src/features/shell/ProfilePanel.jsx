@@ -1,14 +1,15 @@
-import { useState } from 'react';
-import { LogIn, LogOut, UserPlus, Check, X, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { LogIn, LogOut, UserPlus, X, Loader2, Link2 } from 'lucide-react';
 import './ProfilePanel.css';
+import Avatar from '../../components/ui/Avatar.jsx';
 
 function AccountRow({ acc, onSwitch, onRemove }) {
-  const avatarSrc = `https://mc-heads.net/avatar/${acc.uuid ?? 'MHF_Steve'}/60`;
   return (
     <button className="pp-account-row" onClick={() => onSwitch(acc.id)}>
-      <img className="pp-account-avatar-sm" src={avatarSrc} alt="" />
+      <Avatar className="pp-account-avatar-sm" uuid={acc.uuid} />
       <span className="pp-account-name">{acc.name}</span>
       {acc.type === 'offline' && <span className="pp-offline-badge">Offline</span>}
+      {acc.type === 'native' && <span className="pp-native-badge">Native</span>}
       <button
         className="pp-account-remove"
         title="Remove"
@@ -28,16 +29,24 @@ export default function ProfilePanel({
   onRemoveAccount = () => {},
   onAddOffline    = () => {},
   onAddMicrosoft  = () => {},
+  onAddNative     = () => {},
   onClose
 }) {
   const isMs     = account?.isMicrosoft;
   const isOffline = account?.type === 'offline';
-  const avatarSrc = `https://mc-heads.net/avatar/${account?.uuid ?? 'MHF_Steve'}/120`;
+  const isNative = account?.type === 'native';
 
   const [showAdd, setShowAdd]         = useState(false);
   const [offlineName, setOfflineName] = useState('');
   const [offlineError, setOfflineError] = useState('');
   const [msBusy, setMsBusy]           = useState(false);
+  const [nativeBusy, setNativeBusy]   = useState(false);
+  const [nativeLinkCode, setNativeLinkCode] = useState('');
+
+  useEffect(() => window.native?.accounts?.onNativeLinkState?.((state) => {
+    if (state.status === 'waiting') setNativeLinkCode(state.userCode || '');
+    if (state.status === 'linked' || state.status === 'error') setNativeLinkCode('');
+  }), []);
 
   const otherAccounts = accounts.filter(a => a.id !== activeId);
 
@@ -61,6 +70,20 @@ export default function ProfilePanel({
     onClose?.();
   };
 
+  const handleAddNative = async () => {
+    setNativeBusy(true);
+    setNativeLinkCode('');
+    setOfflineError('');
+    const res = await onAddNative();
+    setNativeBusy(false);
+    if (res?.ok === false) {
+      setOfflineError(res.error ?? 'Could not link Native account');
+      return;
+    }
+    setShowAdd(false);
+    onClose?.();
+  };
+
   const closeAdd = () => {
     setShowAdd(false); setOfflineName(''); setOfflineError('');
   };
@@ -70,11 +93,11 @@ export default function ProfilePanel({
 
       {/* ── current account header ── */}
       <div className="pp-header">
-        <img className="pp-avatar" src={avatarSrc} alt="" />
+        <Avatar className="pp-avatar" uuid={account?.uuid} />
         <div className="pp-identity">
           <span className="pp-name">{account?.name ?? 'Guest'}</span>
-          <span className={`pp-badge${isMs ? ' pp-badge-ms' : ''}`}>
-            {isMs ? 'Microsoft Account' : isOffline ? 'Offline Account' : 'Guest Mode'}
+          <span className={`pp-badge${isMs ? ' pp-badge-ms' : isNative ? ' pp-badge-native' : ''}`}>
+            {isMs ? 'Microsoft Account' : isNative ? 'Native Account' : isOffline ? 'Offline Account' : 'Guest Mode'}
           </span>
         </div>
       </div>
@@ -121,8 +144,19 @@ export default function ProfilePanel({
             <div className="pp-add-or"><span>or</span></div>
 
             <button
+              className="pp-action pp-action-native"
+              disabled={nativeBusy || msBusy}
+              onClick={handleAddNative}
+            >
+              {nativeBusy
+                ? <><Loader2 size={14} className="spin" /> {nativeLinkCode ? `Approve ${nativeLinkCode}` : 'Opening browser…'}</>
+                : <><Link2 size={14} /> Link Native account</>
+              }
+            </button>
+
+            <button
               className="pp-action pp-action-signin"
-              disabled={msBusy}
+              disabled={msBusy || nativeBusy}
               onClick={handleAddMs}
             >
               {msBusy
@@ -144,13 +178,13 @@ export default function ProfilePanel({
 
             <div className="pp-sep pp-sep-inline" />
 
-            {isMs || isOffline ? (
+            {isMs || isOffline || isNative ? (
               <button
                 className="pp-action pp-action-danger"
                 onClick={() => { onRemoveAccount(activeId); onClose?.(); }}
               >
                 <LogOut size={14} />
-                {isMs ? 'Sign out' : 'Remove account'}
+                {isMs || isNative ? 'Sign out' : 'Remove account'}
               </button>
             ) : (
               <button

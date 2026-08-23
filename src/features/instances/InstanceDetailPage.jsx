@@ -3,13 +3,14 @@ import {
   ArrowLeft, Box, Gamepad2, Puzzle, Clock, Play, Square,
   Settings, Trash2, Search, Compass, Loader2, PackageOpen,
   FolderOpen, Globe, ScrollText, ChevronRight, Folder, File,
-  ExternalLink, RefreshCw, Earth, Eraser, Terminal, Download
+  ExternalLink, RefreshCw, Earth, Eraser, Terminal, Download, SlidersHorizontal
 } from 'lucide-react';
-import useLauncher from '../launcher/useLauncher.js';
+import useLauncher, { formatBytes } from '../launcher/useLauncher.js';
 import useInstalledMods from '../mods/useInstalledMods.js';
 import useSettings from '../settings/useSettings.js';
 import useIsInstalled from './useIsInstalled.js';
 import InstanceModal from './InstanceModal.jsx';
+import InstanceOverridesForm from './InstanceOverridesForm.jsx';
 import { timeAgo } from '../../lib/time.js';
 import { LOADER_ICONS } from '../../lib/cfApi.js';
 import { hydrateInstalledProjects } from '../../lib/contentApi.js';
@@ -19,7 +20,8 @@ const TABS = [
   { id: 'content', label: 'Content', icon: PackageOpen },
   { id: 'files',   label: 'Files',   icon: FolderOpen  },
   { id: 'worlds',  label: 'Worlds',  icon: Globe       },
-  { id: 'logs',    label: 'Logs',    icon: ScrollText  }
+  { id: 'logs',    label: 'Logs',    icon: ScrollText  },
+  { id: 'settings', label: 'Settings', icon: SlidersHorizontal }
 ];
 
 function fmtSize(bytes) {
@@ -251,9 +253,10 @@ function LogsTab({ instanceId }) {
   useEffect(() => {
     const api = window.native?.launcher;
     if (!api) return;
-    const off = api.onLog((line) => {
+    const off = api.onLog((payload) => {
       setLines((prev) => {
-        const next = [...prev, String(line)];
+        const batch = Array.isArray(payload) ? payload : [payload];
+        const next = [...prev, ...batch.map(String)];
         return next.length > MAX_LINES ? next.slice(-MAX_LINES) : next;
       });
     });
@@ -367,7 +370,9 @@ export default function InstanceDetailPage({
   onInstall    = () => {}
 }) {
   const instance = store.instances.find((i) => i.id === instanceId);
-  const { status, busy, launch, kill } = useLauncher();
+  const {
+    status, busy, percent, detail, phase, task, total, bytes, size, launch, kill
+  } = useLauncher();
   const { installed, remove } = useInstalledMods(instance);
   const { settings } = useSettings();
   const isInstalled = useIsInstalled(instance, status);
@@ -429,6 +434,18 @@ export default function InstanceDetailPage({
     p.title.toLowerCase().includes(query.trim().toLowerCase())
   );
 
+  const isSelectedInstance = store.selected?.id === instance.id;
+  const showProgress = busy && isSelectedInstance;
+
+  const verifying = phase === 'verifying';
+  const transferred = formatBytes(bytes);
+  const totalSize = formatBytes(size);
+  const stat = verifying
+    ? (total ? `${task ?? 0} / ${total} files` : null)
+    : transferred && totalSize
+      ? `${transferred} / ${totalSize}`
+      : transferred;
+
   return (
     <div className="inst-detail">
       <button className="back-link" onClick={onBack}>
@@ -471,7 +488,15 @@ export default function InstanceDetailPage({
             </button>
           ) : (
             <button className="accent-btn inst-play-btn" disabled={busy} onClick={handlePlay}>
-              <Play size={15} fill="currentColor" /> Play
+              {showProgress ? (
+                <>
+                  <Loader2 size={15} className="spin" /> Launching
+                </>
+              ) : (
+                <>
+                  <Play size={15} fill="currentColor" /> Play
+                </>
+              )}
             </button>
           )}
           <button className="icon-btn" title="Edit instance" onClick={() => setEditing(true)}>
@@ -482,6 +507,25 @@ export default function InstanceDetailPage({
           </button>
         </div>
       </header>
+
+      {/* ── progress bar ── */}
+      {showProgress && (
+        <div className="inst-progress">
+          <div className="inst-progress-meta">
+            <span>
+              {detail || (status === 'preparing' ? 'Preparing…' : 'Downloading…')}
+              {stat && <em className="inst-progress-stat">{stat}</em>}
+            </span>
+            <strong>{status === 'downloading' ? `${percent}%` : 'Working'}</strong>
+          </div>
+          <div className="inst-progress-track">
+            <div
+              className={`inst-progress-fill${status === 'downloading' ? '' : ' indeterminate'}${verifying ? ' inst-progress-fill--verify' : ''}`}
+              style={status === 'downloading' ? { width: `${percent}%` } : undefined}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── tabs ── */}
       <div className="pill-tabs inst-detail-tabs">
@@ -575,6 +619,25 @@ export default function InstanceDetailPage({
 
       {/* ── logs tab ── */}
       {tab === 'logs' && <LogsTab instanceId={instance.id} />}
+
+      {/* ── settings tab (per-instance overrides) ── */}
+      {tab === 'settings' && (
+        <>
+          <div className="inst-files-bar">
+            <span className="inst-bar-label">
+              <SlidersHorizontal size={14} /> Instance Overrides
+            </span>
+            <span className="inst-settings-hint">Overrides fall back to global settings when off</span>
+          </div>
+          <div className="inst-detail-body inst-settings-body">
+            <InstanceOverridesForm
+              value={instance.overrides}
+              globals={settings}
+              onChange={(next) => store.update(instance.id, { overrides: next })}
+            />
+          </div>
+        </>
+      )}
 
       {editing && (
         <InstanceModal

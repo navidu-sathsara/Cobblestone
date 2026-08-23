@@ -211,6 +211,75 @@
   animation: modal-pop 0.22s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
+.modal.modal-lg {
+  width: 468px;
+  max-height: 88vh;
+  gap: 14px;
+}
+
+.modal-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+  margin-right: -4px;
+}
+
+.inst-modal-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.inst-icon-picker--lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+}
+
+.inst-modal-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.ov-advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg-raise);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ov-advanced-toggle:hover { border-color: var(--accent-border); }
+.ov-advanced-toggle.open { border-color: var(--accent-border); background: var(--accent-soft); }
+
+.ov-advanced-toggle span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.ov-advanced-caret {
+  transition: transform 0.2s ease;
+  color: var(--text-dim);
+}
+
+.ov-advanced-toggle.open .ov-advanced-caret {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
 .modal-head {
   display: flex;
   align-items: center;
@@ -218,10 +287,9 @@
 }
 
 .modal-head h3 {
-  font-size: 15px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
 }
 
 .modal-close {
@@ -321,22 +389,27 @@
 
 .color-row {
   display: flex;
-  gap: 8px;
+  gap: 11px;
+  flex-wrap: wrap;
+  padding: 5px 3px;
 }
 
 .color-swatch {
-  width: 32px;
-  height: 32px;
-  border: 2px solid transparent;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 9px;
   cursor: pointer;
-  transition: transform 0.1s, border-color 0.15s;
+  position: relative;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.color-swatch:hover {
+  transform: translateY(-2px);
 }
 
 .color-swatch.active {
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text);
-  border-color: transparent;
-  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--bg-panel), 0 0 0 4px var(--accent);
 }
 
 .modal-actions {

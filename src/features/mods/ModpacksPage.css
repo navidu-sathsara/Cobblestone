@@ -240,3 +240,22 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ---------- status / spinner ---------- */
+
+.modpacks-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 16px 0 4px;
+}
+
+.modpacks-more-load,
+.modpacks-more-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 12px;
+}

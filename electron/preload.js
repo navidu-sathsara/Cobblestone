@@ -24,8 +24,11 @@ contextBridge.exposeInMainWorld('native', {
     list:         ()     => ipcRenderer.invoke('accounts:list'),
     addOffline:   (name) => ipcRenderer.invoke('accounts:addOffline', name),
     addMicrosoft: ()     => ipcRenderer.invoke('accounts:addMicrosoft'),
+    addNative:    ()     => ipcRenderer.invoke('accounts:addNative'),
+    onNativeLinkState: (callback) => subscribe('accounts:nativeLinkState', callback),
     setActive:    (id)   => ipcRenderer.invoke('accounts:setActive', id),
-    remove:       (id)   => ipcRenderer.invoke('accounts:remove', id)
+    remove:       (id)   => ipcRenderer.invoke('accounts:remove', id),
+    getAvatar:    (uuid) => ipcRenderer.invoke('accounts:getAvatar', uuid)
   },
   settings: {
     load: () => ipcRenderer.invoke('settings:load'),
@@ -76,6 +79,9 @@ contextBridge.exposeInMainWorld('native', {
   },
   news: {
     list: (options) => ipcRenderer.invoke('news:list', options)
+  },
+  server: {
+    ping: (address) => ipcRenderer.invoke('server:ping', address)
   }
 });
 

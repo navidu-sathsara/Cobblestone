@@ -10,6 +10,7 @@ const modpacksMod = require('./modpacks');
 const updaterMod = require('./updater');
 const instanceMod = require('./instance');
 const newsMod = require('./news');
+const serverPingMod = require('./serverPing');
 
 let win;
 const appIcon = path.join(__dirname, '..', 'icon.png');
@@ -98,6 +99,7 @@ modpacksMod.init({ app, getWin: () => win }, ipcMain);
 updaterMod.init({ app, getWin: () => win }, ipcMain);
 instanceMod.init({ app }, ipcMain);
 newsMod.init({ app }, ipcMain);
+serverPingMod.init({ app }, ipcMain);
 
 app.whenReady().then(() => {
   app.setName('Native');

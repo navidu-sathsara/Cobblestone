@@ -22,6 +22,7 @@ const AUTH_HEADER_HEIGHT = 58;
 const appIcon = path.join(__dirname, '..', 'icon.png');
 const authShell = path.join(__dirname, 'auth-window.html');
 const authPreload = path.join(__dirname, 'auth-preload.js');
+const NATIVE_API = process.env.NATIVE_ACCOUNT_API || 'https://nativelaunch.xyz/api';
 
 const accountsPath = () => path.join(deps.app.getPath('userData'), 'accounts.json');
 const legacyPath  = () => path.join(deps.app.getPath('userData'), 'account.json');
@@ -51,6 +52,85 @@ function readAccounts() {
 
 function saveAccounts(data) {
   fs.writeFileSync(accountsPath(), JSON.stringify(data, null, 2));
+}
+
+const wait = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
+
+function sendNativeLinkState(payload) {
+  const win = deps?.getWin?.();
+  if (win && !win.isDestroyed()) win.webContents.send('accounts:nativeLinkState', payload);
+}
+
+async function nativeApi(pathname, options = {}) {
+  const response = await fetch(`${NATIVE_API}${pathname}`, {
+    ...options,
+    headers: { 'content-type': 'application/json', ...(options.headers || {}) }
+  });
+  const data = await response.json().catch(() => ({}));
+  return { response, data };
+}
+
+async function linkNativeAccount() {
+  const started = await nativeApi('/launcher/device/start', {
+    method: 'POST',
+    body: JSON.stringify({ deviceName: `Native Launcher ${process.platform}` })
+  });
+  if (!started.response.ok || !started.data.deviceCode) throw new Error(started.data.reason || 'Could not start Native account linking.');
+  sendNativeLinkState({ status: 'waiting', userCode: started.data.userCode, expiresIn: started.data.expiresIn });
+  await shell.openExternal(started.data.verificationUrl);
+
+  const deadline = Date.now() + Number(started.data.expiresIn || 600) * 1000;
+  const interval = Math.max(2, Number(started.data.interval || 2)) * 1000;
+  while (Date.now() < deadline) {
+    await wait(interval);
+    const status = await nativeApi('/launcher/device/status', {
+      method: 'POST',
+      body: JSON.stringify({ deviceCode: started.data.deviceCode })
+    });
+    if (status.response.status === 202) continue;
+    if (!status.response.ok || status.data.status !== 'approved') throw new Error(status.data.reason || 'Native account linking expired.');
+
+    const profile = status.data.profile;
+    const account = {
+      id: `native-${profile.userId}`,
+      name: profile.minecraftUsername,
+      uuid: profile.minecraftUsername,
+      email: profile.email,
+      type: 'native',
+      nativeToken: status.data.token
+    };
+    const saved = readAccounts();
+    saved.accounts = saved.accounts.filter(item => item.id !== account.id);
+    saved.accounts.push(account);
+    saved.activeId = account.id;
+    saveAccounts(saved);
+    sendNativeLinkState({ status: 'linked', userCode: started.data.userCode, account: { name: account.name, email: account.email } });
+    return account;
+  }
+  throw new Error('Native account linking expired. Start again from the launcher.');
+}
+
+async function refreshNativeAccounts(data) {
+  let changed = false;
+  for (const account of data.accounts) {
+    if (account.type !== 'native' || !account.nativeToken) continue;
+    try {
+      const result = await nativeApi('/launcher/profile', {
+        method: 'GET',
+        headers: { authorization: `Bearer ${account.nativeToken}` }
+      });
+      if (!result.response.ok || !result.data.profile?.minecraftUsername) continue;
+      const profile = result.data.profile;
+      if (account.name !== profile.minecraftUsername || account.email !== profile.email) {
+        account.name = profile.minecraftUsername;
+        account.uuid = profile.minecraftUsername;
+        account.email = profile.email;
+        changed = true;
+      }
+    } catch { /* retain the last usable profile while offline */ }
+  }
+  if (changed) saveAccounts(data);
+  return data;
 }
 
 function microsoftAuthCode(authManager) {
@@ -302,12 +382,12 @@ function init(dependencies, ipcMain) {
 
   // ── Multi-account handlers ─────────────────────────────────────────────
 
-  ipcMain.handle('accounts:list', () => {
-    const { accounts, activeId } = readAccounts();
+  ipcMain.handle('accounts:list', async () => {
+    const { accounts, activeId } = await refreshNativeAccounts(readAccounts());
     return {
       activeId,
-      // never send refresh tokens to the renderer
-      accounts: accounts.map(({ refresh: _r, ...rest }) => rest)
+      // never send Microsoft refresh tokens or Native device tokens to the renderer
+      accounts: accounts.map(({ refresh: _r, nativeToken: _n, ...rest }) => rest)
     };
   });
 
@@ -328,6 +408,46 @@ function init(dependencies, ipcMain) {
       return { ok: true, profile };
     } catch (err) {
       return { ok: false, error: String(err?.message ?? err) };
+    }
+  });
+
+  ipcMain.handle('accounts:addNative', async () => {
+    try {
+      const account = await linkNativeAccount();
+      const { nativeToken: _token, ...profile } = account;
+      return { ok: true, account: profile };
+    } catch (err) {
+      sendNativeLinkState({ status: 'error', error: String(err?.message ?? err) });
+      return { ok: false, error: String(err?.message ?? err) };
+    }
+  });
+
+  ipcMain.handle('accounts:getAvatar', async (_event, uuid) => {
+    const avatarUuid = uuid || 'MHF_Steve';
+    const avatarsDir = path.join(deps.app.getPath('userData'), 'avatars');
+    const targetPath = path.join(avatarsDir, `${avatarUuid}.png`);
+
+    if (!fs.existsSync(targetPath)) {
+      try {
+        fs.mkdirSync(avatarsDir, { recursive: true });
+        const url = `https://mc-heads.net/avatar/${avatarUuid}/100`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const buffer = Buffer.from(await res.arrayBuffer());
+          fs.writeFileSync(targetPath, buffer);
+        } else {
+          return `https://mc-heads.net/avatar/${avatarUuid}/100`;
+        }
+      } catch (err) {
+        return `https://mc-heads.net/avatar/${avatarUuid}/100`;
+      }
+    }
+
+    try {
+      const data = fs.readFileSync(targetPath);
+      return `data:image/png;base64,${data.toString('base64')}`;
+    } catch {
+      return `https://mc-heads.net/avatar/${avatarUuid}/100`;
     }
   });
 

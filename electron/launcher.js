@@ -128,16 +128,30 @@ async function launch({ instance, account }) {
   try {
   const settings = settingsMod.get();
 
-  // resolve the right Java for this MC version (auto-download if needed)
+  // Per-instance overrides fall back to the global settings when disabled.
+  const ov = instance.overrides || {};
+  const memory = ov.memory?.enabled ? ov.memory : settings.memory;
+  const resolution = ov.resolution?.enabled ? ov.resolution : settings.resolution;
+  const jvmArgs = typeof ov.jvmArgs === 'string' && ov.jvmArgs.trim()
+    ? ov.jvmArgs.trim().split(/\s+/)
+    : null;
+
+  // resolve the right Java for this MC version (auto-download if needed),
+  // unless the instance pins its own Java binary.
   let javaPath;
-  try {
-    javaPath = await javaMod.ensureJava(instance.version, {
-      setState,
-      sendProgress: (p) => send('launcher:progress', p)
-    });
-  } catch (err) {
-    setState('error', `Java setup failed: ${err.message}`);
-    return;
+  const overrideJava = ov.java?.enabled && ov.java.path ? ov.java.path : null;
+  if (overrideJava) {
+    javaPath = overrideJava;
+  } else {
+    try {
+      javaPath = await javaMod.ensureJava(instance.version, {
+        setState,
+        sendProgress: (p) => send('launcher:progress', p)
+      });
+    } catch (err) {
+      setState('error', `Java setup failed: ${err.message}`);
+      return;
+    }
   }
 
   // Microsoft account when signed in, offline auth otherwise
@@ -154,16 +168,17 @@ async function launch({ instance, account }) {
   const opts = {
     root: rootDir(),
     version: { number: instance.version, type: 'release' },
-    memory: { min: `${settings.memory.min}G`, max: `${settings.memory.max}G` },
+    memory: { min: `${memory.min}G`, max: `${memory.max}G` },
     window: {
-      width: settings.resolution.width,
-      height: settings.resolution.height,
-      fullscreen: settings.resolution.fullscreen
+      width: resolution.width,
+      height: resolution.height,
+      fullscreen: resolution.fullscreen
     },
     overrides: { gameDirectory: instanceDir(instance.id) },
     authorization: authorization ?? Authenticator.getAuth(account?.username || 'Player'),
     javaPath
   };
+  if (jvmArgs) opts.customArgs = jvmArgs;
 
   try {
     if (instance.loader === 'Fabric') {
@@ -269,26 +284,56 @@ function init(dependencies, ipcMain) {
     }
   });
 
+  let lastProgressSentAt = 0;
+  let lastPercentSent = -1;
+  let lastPhaseSent = null;
+
   launcher.on('progress', (e) => {
     if (e.type !== phase) {
       phase = e.type;
       resetBytes();
     }
     const percent = e.total ? Math.round((e.task / e.total) * 100) : 0;
-    send('launcher:progress', {
-      percent,
-      detail: PHASE_LABELS[e.type] ?? `Downloading ${e.type}`,
-      // 'assets' is mostly a SHA1 sweep of files already on disk, so it is
-      // reported as verifying rather than downloading.
-      phase: e.type === 'assets' ? 'verifying' : 'downloading',
-      task: e.task,
-      total: e.total,
-      bytes: bankedBytes + activeBytes
-    });
+    const now = Date.now();
+
+    if (e.type !== lastPhaseSent || percent !== lastPercentSent || now - lastProgressSentAt >= 100) {
+      lastProgressSentAt = now;
+      lastPercentSent = percent;
+      lastPhaseSent = e.type;
+
+      send('launcher:progress', {
+        percent,
+        detail: PHASE_LABELS[e.type] ?? `Downloading ${e.type}`,
+        // 'assets' is mostly a SHA1 sweep of files already on disk, so it is
+        // reported as verifying rather than downloading.
+        phase: e.type === 'assets' ? 'verifying' : 'downloading',
+        task: e.task,
+        total: e.total,
+        bytes: bankedBytes + activeBytes
+      });
+    }
   });
 
-  launcher.on('debug', (line) => send('launcher:log', String(line)));
-  launcher.on('data', (line) => send('launcher:log', String(line)));
+  let logBatch = [];
+  let logTimeout = null;
+
+  const flushLogs = () => {
+    if (logBatch.length > 0) {
+      send('launcher:log', logBatch);
+      logBatch = [];
+    }
+    logTimeout = null;
+  };
+
+  const queueLog = (line) => {
+    logBatch.push(String(line));
+    if (!logTimeout) {
+      logTimeout = setTimeout(flushLogs, 100);
+    }
+  };
+
+  launcher.on('debug', queueLog);
+  launcher.on('data', queueLog);
 
   ipcMain.on('launcher:launch', (_event, payload) => {
     launch(payload).catch((err) => {

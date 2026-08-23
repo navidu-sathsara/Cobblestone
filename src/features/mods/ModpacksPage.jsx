@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Search, Download, Loader2, PackageOpen, Gamepad2 } from 'lucide-react';
 import Dropdown from '../../components/ui/Dropdown.jsx';
 import InstallPackModal from './InstallPackModal.jsx';
@@ -14,32 +14,65 @@ const SORTS = [
   { value: 'updated',   label: 'Sort by: Updated' },
 ];
 
+const appendUnique = (previous, incoming) => {
+  const seen = new Set(previous.map((item) => item.project_id));
+  return [...previous, ...incoming.filter((item) => !seen.has(item.project_id))];
+};
+
 export default function ModpacksPage({ store, onOpenMod = () => {}, onPackInstalled = () => {} }) {
   const [query,     setQuery]     = useState('');
   const [sort,      setSort]      = useState('downloads');
   const [results,   setResults]   = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [packModal, setPackModal] = useState(null);
+  const [page,      setPage]      = useState(0);
+  const [more,      setMore]      = useState(false);
+  const [paging,    setPaging]    = useState(false);
+  const sentinelRef               = useRef(null);
+
+  useEffect(() => { setPage(0); }, [query, sort]);
 
   useEffect(() => {
-    setLoading(true);
+    const controller = new AbortController();
+    const first = page === 0;
+    if (first) setLoading(true); else setPaging(true);
+
     const timer = setTimeout(async () => {
       try {
+        const offset = page * 24;
         const url =
-          `https://api.modrinth.com/v2/search?limit=24&index=${sort}` +
+          `https://api.modrinth.com/v2/search?limit=24&offset=${offset}&index=${sort}` +
           `&query=${encodeURIComponent(query)}` +
           `&facets=${encodeURIComponent(JSON.stringify([['project_type:modpack']]))}`;
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
         if (!response.ok) throw new Error(`Search failed (${response.status})`);
         const data = await response.json();
-        setResults(data.hits ?? []);
-      } catch {
-        setResults([]);
+        const batch = data.hits ?? [];
+        setMore(batch.length === 24);
+        setResults((prev) => (first ? batch : appendUnique(prev, batch)));
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        setMore(false);
+        if (first) setResults([]);
+      } finally {
+        setLoading(false);
+        setPaging(false);
       }
-      setLoading(false);
-    }, query ? 350 : 0);
-    return () => clearTimeout(timer);
-  }, [query, sort]);
+    }, first && query ? 350 : 0);
+
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [query, sort, page]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !more || loading || paging) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) setPage((value) => value + 1); },
+      { rootMargin: '320px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [more, loading, paging, results.length]);
 
   return (
     <div className="modpacks">
@@ -119,6 +152,20 @@ export default function ModpacksPage({ store, onOpenMod = () => {}, onPackInstal
                 </article>
               );
             })}
+          </div>
+        )}
+
+        {!loading && results.length > 0 && (
+          <div className="modpacks-more" ref={sentinelRef}>
+            {paging ? (
+              <span className="modpacks-more-load">
+                <Loader2 size={16} className="spin" /> Loading more…
+              </span>
+            ) : more ? null : (
+              <span className="modpacks-more-end">
+                That’s all {results.length} modpacks.
+              </span>
+            )}
           </div>
         )}
       </div>

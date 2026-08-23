@@ -178,22 +178,24 @@ function logDate(fileName, modified, hours, minutes, seconds) {
 
 function parseServerConnections(text, { fileName = 'latest.log', modified = Date.now() } = {}) {
   const connections = [];
-  const linePattern = /\[(\d{2}):(\d{2}):(\d{2})\].*?\bConnecting to\s+(.+?)\s*$/i;
+  const timePattern = /\[(\d{2}):(\d{2}):(\d{2})\]/;
+  // Capture the host token precisely (and optional ", port") instead of
+  // greedily grabbing to end-of-line, so modded/client logs that append text
+  // after the address (e.g. "Connecting to hypixel.net, 25565 [via proxy]")
+  // are still picked up rather than rejected for containing spaces.
+  const connectPattern = /\bConnecting to\s+([^\s,]+)(?:,\s*(\d{1,5}))?/i;
 
   for (const line of String(text || '').split(/\r?\n/)) {
-    const match = line.match(linePattern);
-    if (!match) continue;
-    const address = cleanServerAddress(match[4]);
+    const connect = line.match(connectPattern);
+    if (!connect) continue;
+    const address = cleanServerAddress(connect[2] ? `${connect[1]}:${connect[2]}` : connect[1]);
     if (!address) continue;
+    const time = line.match(timePattern);
     connections.push({
       address,
-      connectedAt: logDate(
-        fileName,
-        modified,
-        Number(match[1]),
-        Number(match[2]),
-        Number(match[3])
-      )
+      connectedAt: time
+        ? logDate(fileName, modified, Number(time[1]), Number(time[2]), Number(time[3]))
+        : modified
     });
   }
   return connections;
@@ -219,6 +221,37 @@ function readLogText(filePath) {
   return filePath.endsWith('.gz') ? zlib.gunzipSync(buffer).toString('utf8') : buffer.toString('utf8');
 }
 
+function scanLogsDir(logsDir) {
+  const found = [];
+  let logFiles = [];
+  try {
+    logFiles = fs.readdirSync(logsDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && /(?:\.log|\.log\.gz)$/i.test(entry.name))
+      .map((entry) => {
+        const filePath = resolveInside(logsDir, entry.name);
+        return { filePath, fileName: entry.name, stat: fs.statSync(filePath) };
+      })
+      .filter((file) => file.stat.size <= 16 * 1024 * 1024)
+      .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs)
+      .slice(0, 20);
+  } catch {
+    return found;
+  }
+
+  for (const file of logFiles) {
+    try {
+      const connections = parseServerConnections(readLogText(file.filePath), {
+        fileName: file.fileName,
+        modified: file.stat.mtimeMs
+      });
+      found.push(...connections);
+    } catch {
+      // A partially written or corrupt compressed log should not hide other history.
+    }
+  }
+  return found;
+}
+
 function recentServers() {
   const names = readInstanceNames();
   let directories = [];
@@ -226,44 +259,22 @@ function recentServers() {
     directories = fs.readdirSync(instancesDir(), { withFileTypes: true })
       .filter((entry) => entry.isDirectory());
   } catch {
-    return [];
+    directories = [];
   }
 
   const found = [];
   for (const directory of directories) {
     const logsDir = resolveInside(instanceDir(directory.name), 'logs');
-    let logFiles = [];
-    try {
-      logFiles = fs.readdirSync(logsDir, { withFileTypes: true })
-        .filter((entry) => entry.isFile() && /(?:\.log|\.log\.gz)$/i.test(entry.name))
-        .map((entry) => {
-          const filePath = resolveInside(logsDir, entry.name);
-          return { filePath, fileName: entry.name, stat: fs.statSync(filePath) };
-        })
-        .filter((file) => file.stat.size <= 16 * 1024 * 1024)
-        .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs)
-        .slice(0, 20);
-    } catch {
-      continue;
+    const instanceName = names.get(directory.name) || directory.name;
+    for (const connection of scanLogsDir(logsDir)) {
+      found.push({ ...connection, instanceId: directory.name, instanceName });
     }
+  }
 
-    for (const file of logFiles) {
-      try {
-        const connections = parseServerConnections(readLogText(file.filePath), {
-          fileName: file.fileName,
-          modified: file.stat.mtimeMs
-        });
-        for (const connection of connections) {
-          found.push({
-            ...connection,
-            instanceId: directory.name,
-            instanceName: names.get(directory.name) || directory.name
-          });
-        }
-      } catch {
-        // A partially written or corrupt compressed log should not hide other history.
-      }
-    }
+  // Safety net: some launches (or older data) write to the shared root game
+  // directory instead of a per-instance one, so its logs are scanned too.
+  for (const connection of scanLogsDir(path.join(rootDir(), 'logs'))) {
+    found.push({ ...connection, instanceId: null, instanceName: 'Minecraft' });
   }
 
   const servers = new Map();

@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { LayoutGrid, Mail, Hammer, ChevronDown } from 'lucide-react';
+import {
+  Hammer, ChevronDown, Loader2,
+  Gamepad2, Boxes, Puzzle, Package, Globe, Newspaper, Settings
+} from 'lucide-react';
 import WindowControls from '../../components/WindowControls.jsx';
 import DownloadRing from '../../components/DownloadRing.jsx';
 import { useClickOutside } from '../../components/ui/Dropdown.jsx';
-import Sidebar from './Sidebar.jsx';
+import appIcon from '../../../icon.png';
+import BottomBar from './BottomBar.jsx';
 import ProfilePanel from './ProfilePanel.jsx';
 import HomePage from '../home/HomePage.jsx';
 import InstancesPage from '../instances/InstancesPage.jsx';
@@ -13,7 +17,8 @@ import ModpacksPage from '../mods/ModpacksPage.jsx';
 import ModDetailPage from '../mods/ModDetailPage.jsx';
 import SettingsModal from '../settings/SettingsModal.jsx';
 import useInstances from '../instances/useInstances.js';
-import { useLauncherInstallLock } from '../launcher/useLauncher.js';
+import useLauncher, { useLauncherInstallLock } from '../launcher/useLauncher.js';
+import Avatar from '../../components/ui/Avatar.jsx';
 import iconHypixel    from '../../assets/servers/hypixel.png';
 import iconMineplex   from '../../assets/servers/mineplex.png';
 import iconTimolia    from '../../assets/servers/timolia.png';
@@ -31,6 +36,15 @@ const SERVERS = [
   { key: 'L', name: 'LemonCloud', icon: iconLemoncloud },
 ];
 
+const NAV = [
+  { id: 'play',      icon: Gamepad2,      label: 'Play' },
+  { id: 'instances', icon: Boxes,         label: 'Instances' },
+  { id: 'mods',      icon: Puzzle,        label: 'Mods' },
+  { id: 'modpacks',  icon: Package,       label: 'Modpacks' },
+  { id: 'servers',   icon: Globe,         label: 'Servers' },
+  { id: 'news',      icon: Newspaper,     label: 'News' }
+];
+
 function ComingSoon({ label }) {
   return (
     <div className="coming-soon">
@@ -41,7 +55,7 @@ function ComingSoon({ label }) {
   );
 }
 
-const PAGE_LABELS = { servers: 'Servers', news: 'News', store: 'Store' };
+const PAGE_LABELS = { servers: 'Servers', news: 'News' };
 
 function initialNav() {
   const hash = window.location.hash;
@@ -63,6 +77,7 @@ export default function Shell({
   accounts = [],
   activeId = null,
   onAddMicrosoft  = () => {},
+  onAddNative     = () => {},
   onAddOffline    = () => {},
   onSwitchAccount = () => {},
   onRemoveAccount = () => {}
@@ -76,6 +91,7 @@ export default function Shell({
   const profileRef = useClickOutside(() => setProfileOpen(false));
   const store = useInstances();
   const sidebarLocked = useLauncherInstallLock();
+  const { status, percent, detail, busy } = useLauncher();
 
   const page = nav.page;
   const sidebarActive =
@@ -86,36 +102,47 @@ export default function Shell({
 
   return (
     <div className="shell">
-      <Sidebar
-        active={settingsOpen ? 'settings' : sidebarActive}
-        locked={sidebarLocked}
-        onNavigate={(id) =>
-          id === 'settings' ? setSettingsOpen(true) : setNav({ page: id })
-        }
-      />
 
       <main className="shell-main">
         <header className="shell-top">
-          <div className="quickplay">
-            <button className="quickplay-label">
-              <LayoutGrid size={14} /> Quick Play
-            </button>
-            <div className="quickplay-servers">
-              {SERVERS.map((s) => (
-                <button key={s.key} className="server-tile" title={s.name}>
-                  <img src={s.icon} alt={s.name} className="server-tile-icon" />
-                </button>
-              ))}
+          <div className="shell-top-left">
+            <div className="shell-logo">
+              <img src={appIcon} alt="Native Logo" className="shell-logo-img" />
             </div>
+
+            <span className="shell-nav-divider" />
+
+            <nav className="shell-nav" data-testid="shell-nav">
+              {NAV.map(({ id, icon: Icon, label }) => {
+                const active = settingsOpen ? false : sidebarActive === id;
+                return (
+                  <button
+                    key={id}
+                    data-testid={`nav-${id}`}
+                    className={`shell-nav-item${active ? ' active' : ''}`}
+                    title={sidebarLocked ? 'Navigation locked while installing' : label}
+                    disabled={sidebarLocked}
+                    onClick={() => {
+                      setSettingsOpen(false);
+                      setNav({ page: id });
+                    }}
+                  >
+                    <span className="shell-nav-item-inner">
+                      <Icon size={15} strokeWidth={2.4} />
+                      <span>{label}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
 
           <div className="shell-top-right">
             <div className="account-wrap" ref={profileRef}>
               <button className="account-chip" onClick={() => setProfileOpen((v) => !v)}>
-                <img
+                <Avatar
                   className="account-avatar account-avatar-img"
-                  src={`https://mc-heads.net/avatar/${account.uuid ?? 'MHF_Steve'}/60`}
-                  alt=""
+                  uuid={account.uuid}
                 />
                 <span className="account-text">
                   <small>Playing as</small>
@@ -133,13 +160,25 @@ export default function Shell({
                   onRemoveAccount={onRemoveAccount}
                   onAddOffline={onAddOffline}
                   onAddMicrosoft={onAddMicrosoft}
+                  onAddNative={onAddNative}
                   onClose={() => setProfileOpen(false)}
                 />
               )}
             </div>
 
-            <button className="icon-btn" title="Inbox">
-              <Mail size={16} />
+            {busy && (
+              <div className="launcher-progress-chip" title={`${status}: ${detail}`}>
+                <Loader2 size={13} className="spin launcher-progress-spin" />
+                <span>{status === 'downloading' ? `${percent}%` : 'Launching'}</span>
+              </div>
+            )}
+            <button
+              className={`icon-btn${settingsOpen ? ' active' : ''}`}
+              title={sidebarLocked ? 'Navigation locked while installing' : 'Settings'}
+              disabled={sidebarLocked}
+              onClick={() => setSettingsOpen((v) => !v)}
+            >
+              <Settings size={16} />
             </button>
             <DownloadRing />
             <span className="top-divider" />
@@ -172,20 +211,20 @@ export default function Shell({
         ) : page === 'mods' ? (
           <ModsPage
             store={store}
-            onOpenMod={(id) => setNav({ page: 'mod', id })}
+            onOpenMod={(id) => setNav({ page: 'mod', id, from: 'mods' })}
             onPackInstalled={(id) => setNav({ page: 'instance', id })}
           />
         ) : page === 'modpacks' ? (
           <ModpacksPage
             store={store}
-            onOpenMod={(id) => setNav({ page: 'mod', id })}
+            onOpenMod={(id) => setNav({ page: 'mod', id, from: 'modpacks' })}
             onPackInstalled={(id) => setNav({ page: 'instance', id })}
           />
         ) : page === 'mod' ? (
           <ModDetailPage
             store={store}
             projectId={nav.id}
-            onBack={() => setNav({ page: 'mods' })}
+            onBack={() => setNav({ page: nav.from || 'mods' })}
             onPackInstalled={(id) => setNav({ page: 'instance', id })}
           />
         ) : (
@@ -194,6 +233,7 @@ export default function Shell({
       </main>
 
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      <BottomBar />
     </div>
   );
 }

@@ -1,0 +1,33 @@
+.bottom-bar {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  min-height: 26px;
+  padding: 0 14px;
+  background: rgba(0, 0, 0, 0.28);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+}
+
+.bottom-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.bottom-bar-logo {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  opacity: 0.55;
+}
+
+.bottom-bar-version {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  opacity: 0.45;
+  letter-spacing: 0.3px;
+}

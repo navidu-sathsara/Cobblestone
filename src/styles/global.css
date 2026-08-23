@@ -9,10 +9,12 @@ html,
 body,
 #root {
   height: 100%;
-  font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+  font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
   background: transparent;
   color: var(--text);
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .window-frame {
@@ -62,10 +64,9 @@ button {
 }
 
 .section-head h2 {
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
 }
 
 .section-link {
@@ -295,4 +296,18 @@ button {
   background: var(--accent);
   border-radius: 2px;
   transition: width 0.3s ease;
+}
+
+/* ---------- avatar skeleton ---------- */
+
+.avatar-skeleton {
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  animation: avatar-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes avatar-pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.5; }
 }

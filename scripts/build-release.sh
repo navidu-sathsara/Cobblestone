@@ -48,11 +48,16 @@ if [[ -n "$VERSION" ]]; then
 fi
 
 # --- 1. sync source to the VPS -------------------------------------------
+# Secrets are never synced: the VPS build runs electron-builder without
+# --publish, so it has no use for a GitHub token, and anything copied to
+# $VPS_DIR stays there after the build.
 echo "==> syncing source to $VPS_HOST:$VPS_DIR"
 TMP=$(mktemp -d)
 tar czf "$TMP/src.tgz" \
   --exclude='./node_modules' --exclude='./release' --exclude='./dist' \
-  --exclude='./*.git*' .
+  --exclude='./*.git*' \
+  --exclude='./electron-builder.env' --exclude='./*.env' \
+  --exclude='./*.pem' --exclude='./*.pfx' .
 "${SCP[@]}" "$TMP/src.tgz" "$VPS_USER@$VPS_HOST:/tmp/native-src.tgz"
 "${SSH[@]}" "mkdir -p '$VPS_DIR' && tar xzf /tmp/native-src.tgz -C '$VPS_DIR'"
 

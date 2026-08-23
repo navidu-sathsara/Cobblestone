@@ -53,6 +53,12 @@ export default function App() {
     return res;
   };
 
+  const handleAddNative = async () => {
+    const res = await window.native?.accounts?.addNative();
+    if (res?.ok) await refreshAccounts();
+    return res;
+  };
+
   const handleSwitchAccount = async (id) => {
     await window.native?.accounts?.setActive(id);
     setActiveId(id);
@@ -72,6 +78,7 @@ export default function App() {
         accounts={accounts}
         activeId={activeId}
         onAddMicrosoft={handleAddMicrosoft}
+        onAddNative={handleAddNative}
         onAddOffline={handleAddOffline}
         onSwitchAccount={handleSwitchAccount}
         onRemoveAccount={handleRemoveAccount}

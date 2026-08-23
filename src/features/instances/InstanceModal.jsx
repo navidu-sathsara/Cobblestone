@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Box } from 'lucide-react';
+import { X, Box, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import Button from '../../components/ui/Button.jsx';
 import Dropdown from '../../components/ui/Dropdown.jsx';
+import useSettings from '../settings/useSettings.js';
+import InstanceOverridesForm from './InstanceOverridesForm.jsx';
 import { LOADER_ICONS } from '../../lib/cfApi.js';
 
 const FALLBACK_VERSIONS = [
@@ -30,7 +32,10 @@ export default function InstanceModal({ initial = null, onClose, onSave }) {
   const [color, setColor] = useState(initial?.color ?? COLORS[0]);
   const [icon, setIcon] = useState(initial?.icon ?? null);
   const [versions, setVersions] = useState(FALLBACK_VERSIONS);
+  const [overrides, setOverrides] = useState(initial?.overrides ?? null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const fileRef = useRef(null);
+  const { settings } = useSettings();
 
   useEffect(() => {
     fetchVersions()
@@ -46,55 +51,57 @@ export default function InstanceModal({ initial = null, onClose, onSave }) {
       loader === initial?.loader && version === initial?.version
         ? initial?.loaderVersion ?? null
         : null;
-    onSave({ name: name.trim(), version, loader, loaderVersion, color, icon });
+    onSave({
+      name: name.trim(),
+      version,
+      loader,
+      loaderVersion,
+      color,
+      icon,
+      ...(overrides ? { overrides } : {})
+    });
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()} data-testid="instance-modal">
         <div className="modal-head">
           <h3>{initial ? 'Edit Instance' : 'New Instance'}</h3>
-          <button className="modal-close" onClick={onClose}>
+          <button className="modal-close" onClick={onClose} data-testid="instance-modal-close">
             <X size={16} />
           </button>
         </div>
 
-        <label className="field">
-          <span>Name</span>
-          <input
-            type="text"
-            value={name}
-            placeholder="My Awesome Instance"
-            autoFocus
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
-          />
-        </label>
-
-        <div className="field">
-          <span>Icon</span>
-          <div className="inst-icon-row">
+        <div className="modal-scroll">
+          <div className="inst-modal-hero">
             <button
               type="button"
-              className="inst-icon-picker"
+              className="inst-icon-picker inst-icon-picker--lg"
               style={{ background: icon ? 'transparent' : color }}
               onClick={() => fileRef.current?.click()}
+              title="Upload a custom icon"
             >
               {icon
                 ? <img src={icon} className="inst-icon-preview" alt="" />
-                : <Box size={20} />
-              }
+                : <Box size={26} />}
             </button>
-            <div className="inst-icon-info">
-              <span className="inst-icon-hint">
-                {icon ? 'Custom icon set — click to change' : 'Click to upload a custom icon'}
-              </span>
+            <label className="field inst-modal-name">
+              <span>Instance Name</span>
+              <input
+                type="text"
+                value={name}
+                placeholder="My Awesome Instance"
+                autoFocus
+                data-testid="instance-name-input"
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+              />
               {icon && (
                 <button type="button" className="inst-icon-clear" onClick={() => setIcon(null)}>
-                  Remove
+                  Remove custom icon
                 </button>
               )}
-            </div>
+            </label>
             <input
               ref={fileRef}
               type="file"
@@ -110,47 +117,65 @@ export default function InstanceModal({ initial = null, onClose, onSave }) {
               }}
             />
           </div>
-        </div>
 
-        <div className="field">
-          <span>Minecraft Version</span>
-          <Dropdown value={version} options={versions} onChange={setVersion} />
-        </div>
-
-        <div className="field">
-          <span>Mod Loader</span>
-          <div className="loader-row">
-            {LOADERS.map((l) => (
-              <button
-                key={l}
-                className={`loader-pill${l === loader ? ' active' : ''}`}
-                onClick={() => setLoader(l)}
-                title={l}
-              >
-                <img src={LOADER_ICONS[l]} className="loader-pill-icon" alt={l} />
-                <span className="loader-pill-label">{l}</span>
-              </button>
-            ))}
+          <div className="field">
+            <span>Minecraft Version</span>
+            <Dropdown value={version} options={versions} onChange={setVersion} />
           </div>
-        </div>
 
-        <div className="field">
-          <span>Color</span>
-          <div className="color-row">
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                className={`color-swatch${c === color ? ' active' : ''}`}
-                style={{ background: c }}
-                onClick={() => setColor(c)}
-              />
-            ))}
+          <div className="field">
+            <span>Mod Loader</span>
+            <div className="loader-row">
+              {LOADERS.map((l) => (
+                <button
+                  key={l}
+                  className={`loader-pill${l === loader ? ' active' : ''}`}
+                  onClick={() => setLoader(l)}
+                  title={l}
+                >
+                  <img src={LOADER_ICONS[l]} className="loader-pill-icon" alt={l} />
+                  <span className="loader-pill-label">{l}</span>
+                </button>
+              ))}
+            </div>
           </div>
+
+          <div className="field">
+            <span>Accent Color</span>
+            <div className="color-row">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  className={`color-swatch${c === color ? ' active' : ''}`}
+                  style={{ background: c }}
+                  onClick={() => setColor(c)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className={`ov-advanced-toggle${showAdvanced ? ' open' : ''}`}
+            onClick={() => setShowAdvanced((v) => !v)}
+            data-testid="instance-advanced-toggle"
+          >
+            <span><SlidersHorizontal size={14} /> Advanced — per-instance overrides</span>
+            <ChevronDown size={16} className="ov-advanced-caret" />
+          </button>
+
+          {showAdvanced && (
+            <InstanceOverridesForm
+              value={overrides}
+              globals={settings}
+              onChange={setOverrides}
+            />
+          )}
         </div>
 
         <div className="modal-actions">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button variant="accent" onClick={submit} disabled={!valid}>
+          <Button variant="accent" onClick={submit} disabled={!valid} data-testid="instance-save-btn">
             {initial ? 'Save Changes' : 'Create Instance'}
           </Button>
         </div>
