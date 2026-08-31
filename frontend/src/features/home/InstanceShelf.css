@@ -54,9 +54,9 @@
 }
 
 .instance-card--active {
-  border-color: rgba(239, 143, 52, 0.45);
-  background: linear-gradient(180deg, rgba(239, 143, 52, 0.14), var(--ink-100));
-  box-shadow: 0 10px 26px rgba(180, 84, 18, 0.16);
+  border-color: rgba(214, 214, 218, 0.45);
+  background: linear-gradient(180deg, rgba(214, 214, 218, 0.14), var(--ink-100));
+  box-shadow: 0 10px 26px rgba(167, 167, 173, 0.16);
 }
 
 .instance-state {
@@ -121,8 +121,8 @@
 }
 
 .instance-card--new:hover {
-  border-color: rgba(239, 143, 52, 0.5);
-  background: rgba(239, 143, 52, 0.06);
+  border-color: rgba(214, 214, 218, 0.5);
+  background: rgba(214, 214, 218, 0.06);
   color: var(--text);
 }
 

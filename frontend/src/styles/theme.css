@@ -4,32 +4,32 @@
    here so the whole window can be retoned from this file. */
 :root {
   /* Surfaces, darkest chrome to most raised panel. */
-  --ink-000: #06080b;
-  --ink-050: #0a0d12;
-  --ink-100: #10141c;
-  --ink-150: #151b25;
-  --ink-200: #1c2432;
-  --ink-250: #242e3e;
+  --ink-000: #0B0B0C;
+  --ink-050: #0B0B0C;
+  --ink-100: #141416;
+  --ink-150: #1E1E21;
+  --ink-200: #1E1E21;
+  --ink-250: #2A2A2E;
 
-  --edge: rgba(255, 255, 255, 0.055);
-  --edge-strong: rgba(255, 255, 255, 0.12);
-  --edge-bright: rgba(255, 255, 255, 0.22);
+  --edge: #2A2A2E;
+  --edge-strong: #2A2A2E;
+  --edge-bright: #2A2A2E;
 
-  --text: #f2f5f8;
-  --text-dim: #98a3b3;
-  --text-muted: #6a7484;
-  --text-faint: #48505d;
+  --text: #F5F5F5;
+  --text-dim: #A7A7AD;
+  --text-muted: #6B6B72;
+  --text-faint: #6B6B72;
 
-  /* Copper: the single primary action colour. */
-  --copper-200: #ffd6a3;
-  --copper-300: #ffbc74;
-  --copper-500: #ef8f34;
-  --copper-600: #de761d;
-  --copper-700: #b45412;
-  --copper-glow: rgba(239, 143, 52, 0.32);
+  /* Copper/Primary action colour mapped to new active/highlights */
+  --copper-200: #FFFFFF;
+  --copper-300: #FFFFFF;
+  --copper-500: #D6D6DA;
+  --copper-600: #D6D6DA;
+  --copper-700: #A7A7AD;
+  --copper-glow: rgba(214, 214, 218, 0.32);
 
   --amethyst: #8f6cf5;
-  --amethyst-deep: #4b2f9c;
+  --amethyst-deep: #6B6B72;
   --lime: #8fe36a;
   --rust: #e0503f;
 
@@ -176,7 +176,7 @@ img {
 }
 
 .chip--accent {
-  border-color: rgba(239, 143, 52, 0.45);
+  border-color: rgba(214, 214, 218, 0.45);
   color: var(--copper-200);
 }
 

@@ -207,7 +207,7 @@
   height: 22px;
   border-radius: 50%;
   background: linear-gradient(180deg, var(--copper-300), var(--copper-600));
-  color: #241203;
+  color: #0B0B0C;
   opacity: 0;
   transform: translateY(-50%) scale(0.8);
   transition: opacity 160ms var(--ease), transform 160ms var(--ease);

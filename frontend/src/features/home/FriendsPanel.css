@@ -54,7 +54,7 @@
   border-radius: 6px;
   object-fit: cover;
   image-rendering: pixelated;
-  background: #232935;
+  background: #1E1E21;
 }
 
 .friend-head--fallback {

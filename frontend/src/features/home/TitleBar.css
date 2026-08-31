@@ -159,7 +159,7 @@
   border-radius: 5px;
   object-fit: cover;
   image-rendering: pixelated;
-  background: #232935;
+  background: #1E1E21;
 }
 
 .avatar--fallback {
@@ -286,7 +286,7 @@
 }
 
 .account-offline-input:focus {
-  border-color: rgba(239, 143, 52, 0.55);
+  border-color: rgba(214, 214, 218, 0.55);
 }
 
 .account-offline-add {
@@ -296,7 +296,7 @@
   height: 30px;
   border-radius: 8px;
   background: linear-gradient(180deg, var(--copper-300), var(--copper-600));
-  color: #221206;
+  color: #0B0B0C;
   transition: opacity 140ms var(--ease), transform 140ms var(--ease);
 }
 

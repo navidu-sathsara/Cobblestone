@@ -61,15 +61,15 @@
 }
 
 .news-card--copper {
-  --news-art: radial-gradient(80% 100% at 20% 0%, #ffbc74, transparent 62%), linear-gradient(160deg, #b45412, #45210b);
+  --news-art: radial-gradient(80% 100% at 20% 0%, #D6D6DA, transparent 62%), linear-gradient(160deg, #6B6B72, #141416);
 }
 
 .news-card--amethyst {
-  --news-art: radial-gradient(80% 100% at 80% 0%, #a78bfa, transparent 60%), linear-gradient(160deg, #4b2f9c, #180f33);
+  --news-art: radial-gradient(80% 100% at 80% 0%, #D6D6DA, transparent 60%), linear-gradient(160deg, #6B6B72, #141416);
 }
 
 .news-card--verdant {
-  --news-art: radial-gradient(80% 100% at 30% 10%, #7ed957, transparent 60%), linear-gradient(160deg, #1d6b39, #0c2418);
+  --news-art: radial-gradient(80% 100% at 30% 10%, #D6D6DA, transparent 60%), linear-gradient(160deg, #6B6B72, #141416);
 }
 
 .news-body {

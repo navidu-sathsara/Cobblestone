@@ -86,10 +86,10 @@
 }
 
 .rail-item--active .rail-glyph {
-  background: linear-gradient(180deg, rgba(255, 188, 116, 0.22), rgba(180, 84, 18, 0.16));
-  border-color: rgba(239, 143, 52, 0.4);
+  background: linear-gradient(180deg, rgba(255, 188, 116, 0.22), rgba(167, 167, 173, 0.16));
+  border-color: rgba(214, 214, 218, 0.4);
   color: var(--copper-200);
-  box-shadow: 0 4px 14px rgba(239, 143, 52, 0.18);
+  box-shadow: 0 4px 14px rgba(214, 214, 218, 0.18);
 }
 
 .rail-label {

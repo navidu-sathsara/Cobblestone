@@ -228,6 +228,9 @@ if (!app.requestSingleInstanceLock()) {
 
     protocol.handle(APP_SCHEME, serveRenderer);
     hardenSession(session.defaultSession);
+    
+    const { autoUpdater } = require('electron-updater');
+    autoUpdater.checkForUpdatesAndNotify();
 
     disposeBackendIpc = registerElectronIpc({
       ipcMain,
