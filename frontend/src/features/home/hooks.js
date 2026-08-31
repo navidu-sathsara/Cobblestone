@@ -97,6 +97,14 @@ export function useAccounts(onError) {
       (username) => attempt(() => bridge.accounts.addOffline(username), onError),
       [onError],
     ),
+    remove: useCallback(
+      async (id) => {
+        const removed = await attempt(() => bridge.accounts.remove(id), onError);
+        if (removed) await refresh();
+        return removed;
+      },
+      [onError, refresh],
+    ),
     loginMicrosoft,
   };
 }
@@ -229,9 +237,11 @@ export function useGameSession(instanceId, onError) {
 /**
  * Pings every partnered server with the backend's native server-list ping to
  * get real player counts, latency and (when the server sends one) its icon.
+ * `refresh` re-runs every ping, which the Partners screen exposes as a button.
  */
 export function useServerStatus(servers) {
   const [statuses, setStatuses] = useState({});
+  const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,7 +258,7 @@ export function useServerStatus(servers) {
         });
     }
     return () => { cancelled = true; };
-  }, [servers]);
+  }, [servers, nonce]);
 
-  return statuses;
+  return { statuses, refresh: useCallback(() => setNonce((value) => value + 1), []) };
 }

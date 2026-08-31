@@ -1,64 +1,117 @@
-/* Design tokens for the launcher shell.
-   Palette: deepslate greys lit by copper, with amethyst and lime as the only
-   secondary hues. Every surface colour on the home page resolves to a token
-   here so the whole window can be retoned from this file. */
+/* ============================================================================
+   Cobblestone design tokens.
+
+   Direction: basalt. Cold near-black slate surfaces cut by warm ember copper,
+   the only saturated hue in the chrome. Lime reads "ready/online", amber
+   "working", rust "broken". Every surface, border, type size and gap in the
+   renderer resolves to a token here, so the whole window retones from one file.
+
+   Naming is semantic on purpose: --surface-2 / --line-strong / --accent, never
+   a colour name that can drift from what the value actually is.
+   ========================================================================== */
 :root {
-  /* Surfaces, darkest chrome to most raised panel. */
-  --ink-000: #0B0B0C;
-  --ink-050: #0B0B0C;
-  --ink-100: #141416;
-  --ink-150: #1E1E21;
-  --ink-200: #1E1E21;
-  --ink-250: #2A2A2E;
+  color-scheme: dark;
 
-  --edge: #2A2A2E;
-  --edge-strong: #2A2A2E;
-  --edge-bright: #2A2A2E;
+  /* --- Surfaces: window chrome up to the most raised panel ---------------- */
+  --bg: #08090B;
+  --surface-1: #0F1115;
+  --surface-2: #161A20;
+  --surface-3: #1F242C;
+  --surface-4: #2A313B;
 
-  --text: #F5F5F5;
-  --text-dim: #A7A7AD;
-  --text-muted: #6B6B72;
-  --text-faint: #6B6B72;
+  --line: #232A34;
+  --line-strong: #39424F;
 
-  /* Copper/Primary action colour mapped to new active/highlights */
-  --copper-200: #FFFFFF;
-  --copper-300: #FFFFFF;
-  --copper-500: #D6D6DA;
-  --copper-600: #D6D6DA;
-  --copper-700: #A7A7AD;
-  --copper-glow: rgba(214, 214, 218, 0.32);
+  /* --- Type ------------------------------------------------------------- */
+  --text: #ECEFF3;
+  --text-2: #A6AEBB;
+  --text-3: #727C8B;
 
-  --amethyst: #8f6cf5;
-  --amethyst-deep: #6B6B72;
-  --lime: #8fe36a;
-  --rust: #e0503f;
+  /* --- Accent: ember copper --------------------------------------------- */
+  --accent: #E1873A;
+  --accent-bright: #FFB463;
+  --accent-deep: #A6541A;
+  --accent-soft: rgba(225, 135, 58, 0.13);
+  --accent-glow: rgba(225, 135, 58, 0.34);
+  --accent-ink: #1B0F04;
 
-  --online: var(--lime);
-  --idle: #f2c33c;
-  --offline: #4b5563;
+  /* --- Support hues ------------------------------------------------------ */
+  --ok: #7BD46B;
+  --warn: #F2C33C;
+  --danger: #E4574A;
+  --danger-soft: rgba(228, 87, 74, 0.12);
+  --danger-text: #FF9C8E;
+  --info: #5FA8E8;
+  --amethyst: #8F6CF5;
+  --lime: #8FE36A;
+
+  --online: var(--ok);
+  --idle: var(--warn);
+  --offline: #4B5563;
 
   --discord-from: #5865f2;
   --discord-to: #2b2f7a;
   --store-from: #3fbf6a;
   --store-to: #14663a;
 
-  --r-lg: 16px;
-  --r-md: 11px;
-  --r-sm: 8px;
+  /* --- Type scale: 10px is reserved for uppercase micro labels only ------ */
+  --fs-0: 10px;
+  --fs-1: 11px;
+  --fs-2: 11.5px;
+  --fs-3: 12px;
+  --fs-4: 13px;
+  --fs-5: 14px;
+  --fs-6: 16px;
+  --fs-7: 19px;
+  --fs-8: 24px;
+  --fs-9: 31px;
+  --fs-10: clamp(28px, 3.4vw, 44px);
 
-  --rail-w: 84px;
-  --aside-w: 268px;
-  --chrome-h: 46px;
+  /* --- Space scale ------------------------------------------------------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 56px;
+  --s-10: 72px;
+
+  /* --- Radii ------------------------------------------------------------- */
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* --- Elevation --------------------------------------------------------- */
+  --sh-1: 0 2px 8px rgba(0, 0, 0, 0.40);
+  --sh-2: 0 12px 30px rgba(0, 0, 0, 0.50);
+  --sh-3: 0 30px 80px rgba(0, 0, 0, 0.66);
+
+  /* --- Layout ------------------------------------------------------------ */
+  --rail-w: 92px;
+  --aside-w: 288px;
+  --chrome-h: 48px;
+  --drawer-w: 432px;
 
   /* Condensed industrial display face for headings and the wordmark; the text
      face stays a neutral UI stack. Both are system-resident: the renderer CSP
-     allows no remote font origin. */
+     allows no remote font origin, so the chain has to degrade sanely on
+     Windows, macOS and Linux alike. */
   --font-display: "Bahnschrift SemiBold", Bahnschrift, "DIN Alternate", "DIN Condensed",
-    "Haettenschweiler", "Arial Narrow", "Roboto Condensed", "Segoe UI Semibold", sans-serif;
-  --font: "Segoe UI Variable Text", "Segoe UI", "Avenir Next", Ubuntu, "Noto Sans", sans-serif;
-  --font-mono: "Cascadia Mono", Consolas, "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+    "Oswald", "Roboto Condensed", "Liberation Sans Narrow", "Arial Narrow", "Segoe UI Semibold",
+    sans-serif;
+  --font: "Segoe UI Variable Text", "Segoe UI", "SF Pro Text", "Liberation Sans", "Noto Sans",
+    sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "SF Mono", "JetBrains Mono", "Liberation Mono",
+    ui-monospace, monospace;
 
   --ease: cubic-bezier(0.22, 0.68, 0.24, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 *,
@@ -75,11 +128,11 @@ body,
 }
 
 body {
-  background: var(--ink-050);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font);
-  font-size: 13px;
-  line-height: 1.35;
+  font-size: var(--fs-4);
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   /* The window is frameless; only elements that opt in are draggable. */
@@ -101,7 +154,9 @@ button:disabled {
   cursor: default;
 }
 
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -111,29 +166,29 @@ img {
 }
 
 ::selection {
-  background: var(--copper-500);
-  color: #17100a;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--copper-300);
+  outline: 2px solid var(--accent-bright);
   outline-offset: 2px;
 }
 
-/* Compact uppercase section labels shared by home and library panels. */
+/* Compact uppercase section labels shared across every screen. */
 .eyebrow {
   margin: 0;
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: var(--fs-3);
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .eyebrow--muted {
-  color: var(--text-muted);
-  font-size: 10px;
+  color: var(--text-3);
+  font-size: var(--fs-1);
   letter-spacing: 0.22em;
 }
 
@@ -148,7 +203,7 @@ img {
 
 .dot--online {
   background: var(--online);
-  box-shadow: 0 0 7px rgba(143, 227, 106, 0.55);
+  box-shadow: 0 0 7px rgba(123, 212, 107, 0.55);
 }
 
 .dot--idle {
@@ -161,13 +216,13 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
-  background: rgba(10, 13, 18, 0.55);
-  border: 1px solid var(--edge-strong);
-  color: var(--text-dim);
-  font-size: 10px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: rgba(8, 9, 11, 0.55);
+  border: 1px solid var(--line-strong);
+  color: var(--text-2);
+  font-size: var(--fs-0);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -176,28 +231,33 @@ img {
 }
 
 .chip--accent {
-  border-color: rgba(214, 214, 218, 0.45);
-  color: var(--copper-200);
+  border-color: var(--accent-glow);
+  background: var(--accent-soft);
+  color: var(--accent-bright);
 }
 
 .chip--warn {
-  border-color: rgba(224, 80, 63, 0.45);
-  color: #ffb3a8;
+  border-color: rgba(228, 87, 74, 0.45);
+  color: var(--danger-text);
 }
 
 .scroll-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  scrollbar-color: var(--surface-4) transparent;
 }
 
 .scroll-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .scroll-thin::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  background: var(--surface-4);
+}
+
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--line-strong);
 }
 
 .scroll-thin::-webkit-scrollbar-track {
@@ -225,6 +285,26 @@ img {
     opacity: 1;
     transform: none;
   }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .rise {

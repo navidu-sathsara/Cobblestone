@@ -2,30 +2,29 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: var(--s-3);
   width: var(--rail-w);
-  padding: 14px 0 12px;
-  background: linear-gradient(180deg, var(--ink-000), #04050700);
-  background-color: var(--ink-000);
-  border-right: 1px solid var(--edge);
+  padding: var(--s-4) 0 var(--s-3);
+  background: linear-gradient(180deg, var(--surface-1), var(--bg) 70%);
+  border-right: 1px solid var(--line);
 }
 
 .rail-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--s-1);
   width: 100%;
   margin: 0;
-  padding: 0 10px;
+  padding: 0 var(--s-3);
   list-style: none;
-}
-
-.rail-list--foot {
-  flex: none;
-  margin-bottom: 12px;
 }
 
 .rail-list:first-of-type {
   flex: 1;
+}
+
+.rail-list--foot {
+  flex: none;
 }
 
 .rail-item {
@@ -34,24 +33,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: var(--s-1);
   width: 100%;
-  padding: 9px 0 8px;
+  padding: var(--s-2) 0 7px;
   border-radius: var(--r-md);
-  color: var(--text-muted);
-  transition: background 160ms var(--ease), color 160ms var(--ease);
+  color: var(--text-3);
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
 }
 
-/* Active marker: a copper bar bleeding off the rail's left edge. */
+/* Active marker: an ember bar bleeding off the rail's left edge. */
 .rail-item::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: -10px;
+  left: calc(var(--s-3) * -1);
   width: 3px;
   height: 0;
   border-radius: 0 3px 3px 0;
-  background: linear-gradient(180deg, var(--copper-300), var(--copper-700));
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent-deep));
   transform: translateY(-50%);
   transition: height 220ms var(--ease);
 }
@@ -61,47 +60,90 @@
 }
 
 .rail-item:hover .rail-glyph {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--edge);
+  background: var(--surface-3);
+  border-color: var(--line);
 }
 
 .rail-item--active {
-  background: rgba(255, 255, 255, 0.035);
   color: var(--text);
 }
 
 .rail-item--active::before {
-  height: 26px;
+  height: 28px;
 }
 
 .rail-glyph {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 30px;
-  border-radius: 9px;
+  width: 38px;
+  height: 32px;
+  border-radius: var(--r-sm);
   border: 1px solid transparent;
-  transition: background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease),
-    box-shadow 160ms var(--ease);
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease),
+    color 160ms var(--ease), box-shadow 160ms var(--ease);
 }
 
 .rail-item--active .rail-glyph {
-  background: linear-gradient(180deg, rgba(255, 188, 116, 0.22), rgba(167, 167, 173, 0.16));
-  border-color: rgba(214, 214, 218, 0.4);
-  color: var(--copper-200);
-  box-shadow: 0 4px 14px rgba(214, 214, 218, 0.18);
+  background: var(--accent-soft);
+  border-color: var(--accent-glow);
+  color: var(--accent-bright);
+  box-shadow: 0 4px 16px var(--accent-glow);
 }
 
 .rail-label {
-  font-size: 8.5px;
-  font-weight: 700;
+  font-size: var(--fs-0);
+  font-weight: 750;
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
+.rail-external {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+
 .rail-version {
-  color: var(--text-faint);
+  color: var(--text-3);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-1);
   letter-spacing: 0.06em;
+}
+
+/* Narrow windows: the rail becomes a bottom bar so navigation never vanishes. */
+@media (max-width: 700px) {
+  .rail {
+    grid-row: 2;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: var(--s-2) var(--s-2);
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    background: var(--surface-1);
+  }
+  .rail-list,
+  .rail-list:first-of-type {
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0;
+  }
+  .rail-list--foot { flex: none; }
+  .rail-item::before {
+    top: -8px;
+    left: 50%;
+    width: 26px;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    transform: translateX(-50%);
+    transition: opacity 200ms var(--ease);
+    opacity: 0;
+  }
+  .rail-item--active::before { height: 3px; opacity: 1; }
+  .rail-version { display: none; }
 }

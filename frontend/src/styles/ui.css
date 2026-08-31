@@ -1,0 +1,412 @@
+/* ============================================================================
+   Shared UI primitives.
+
+   These used to live inside InstancesPage.css while ContentPage.jsx consumed
+   them, so Content only rendered correctly because both stylesheets happened to
+   be loaded. They are now owned here and imported once from main.jsx.
+   ========================================================================== */
+
+/* --- Page frame ---------------------------------------------------------- */
+.ui-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s-7) var(--s-7) var(--s-8);
+  overflow-y: auto;
+  animation: fade-in 240ms var(--ease) both;
+}
+
+.ui-page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-7);
+  margin-bottom: var(--s-6);
+}
+
+.ui-page-head > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ui-page-head small,
+.ui-eyebrow {
+  color: var(--accent);
+  font-size: var(--fs-1);
+  font-weight: 750;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.ui-page-head h1 {
+  margin: var(--s-1) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-9);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.ui-page-head p {
+  max-width: 62ch;
+  margin: var(--s-2) 0 0;
+  color: var(--text-2);
+  font-size: var(--fs-4);
+}
+
+.ui-page-actions {
+  display: flex;
+  flex: none;
+  gap: var(--s-2);
+}
+
+/* --- Buttons ------------------------------------------------------------- */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 38px;
+  padding: 0 var(--s-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-size: var(--fs-3);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 140ms var(--ease), border-color 140ms var(--ease),
+    color 140ms var(--ease), transform 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+
+.ui-btn > svg { flex: none; }
+.ui-btn:disabled { opacity: 0.42; }
+.ui-btn:not(:disabled):active { transform: translateY(1px); }
+
+.ui-btn--primary {
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  color: var(--accent-ink);
+  box-shadow: 0 8px 20px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.ui-btn--primary:not(:disabled):hover {
+  background: linear-gradient(180deg, #ffc37f, var(--accent-bright));
+  box-shadow: 0 12px 26px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.ui-btn--secondary {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+.ui-btn--secondary:not(:disabled):hover {
+  border-color: var(--accent-glow);
+  background: var(--surface-3);
+}
+
+.ui-btn--ghost { color: var(--text-2); }
+.ui-btn--ghost:not(:disabled):hover { background: var(--surface-2); color: var(--text); }
+
+.ui-btn--danger {
+  border-color: rgba(228, 87, 74, 0.4);
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.ui-btn--danger:not(:disabled):hover { background: rgba(228, 87, 74, 0.2); }
+
+.ui-btn--sm { min-height: 32px; padding: 0 var(--s-3); font-size: var(--fs-2); }
+
+/* --- Fields -------------------------------------------------------------- */
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.ui-field--wide { grid-column: 1 / -1; }
+
+.ui-field > span {
+  color: var(--text-3);
+  font-size: var(--fs-1);
+  font-weight: 750;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.ui-field input,
+.ui-field select,
+.ui-input,
+.ui-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  outline: none;
+  background: var(--surface-1);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-4);
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+
+.ui-field input:focus,
+.ui-field select:focus,
+.ui-input:focus,
+.ui-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.ui-field small { color: var(--text-3); font-size: var(--fs-1); }
+
+/* --- Segmented control --------------------------------------------------- */
+.ui-seg {
+  display: inline-flex;
+  gap: var(--s-1);
+  padding: var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-1);
+}
+
+.ui-seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
+  color: var(--text-3);
+  font-size: var(--fs-1);
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background-color 140ms var(--ease), color 140ms var(--ease);
+}
+
+.ui-seg button:hover { color: var(--text); }
+
+.ui-seg button[aria-pressed='true'],
+.ui-seg button[aria-selected='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-bright);
+  box-shadow: inset 0 0 0 1px var(--accent-glow);
+}
+
+/* --- Modals -------------------------------------------------------------- */
+.ui-modal-backdrop {
+  position: fixed;
+  inset: var(--chrome-h) 0 0;
+  z-index: 72;
+  display: grid;
+  place-items: center;
+  padding: var(--s-5);
+  background: rgba(4, 5, 7, 0.78);
+  backdrop-filter: blur(10px);
+  animation: fade-in 160ms var(--ease) both;
+  -webkit-app-region: no-drag;
+}
+
+.ui-modal {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - var(--chrome-h) - 48px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  box-shadow: var(--sh-3);
+  overflow: hidden;
+  animation: rise 220ms var(--ease-out) both;
+}
+
+.ui-modal--wide { width: min(620px, calc(100vw - 32px)); }
+.ui-modal--xl { width: min(760px, calc(100vw - 32px)); }
+
+.ui-modal-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.ui-modal-head > span:first-child {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ui-modal-head small {
+  color: var(--accent);
+  font-size: var(--fs-1);
+  font-weight: 750;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.ui-modal-head strong {
+  margin-top: 3px;
+  font-family: var(--font-display);
+  font-size: var(--fs-7);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ui-modal-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-xs);
+  color: var(--text-3);
+  transition: background-color 140ms var(--ease), color 140ms var(--ease);
+}
+
+.ui-modal-close:hover { background: var(--surface-3); color: var(--text); }
+
+.ui-modal-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-height: 0;
+  padding: var(--s-5);
+  overflow-y: auto;
+}
+
+.ui-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+
+.ui-modal-actions {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border-top: 1px solid var(--line);
+}
+
+/* --- Data rows / logs ---------------------------------------------------- */
+.ui-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+}
+
+.ui-row > svg { flex: none; color: var(--accent); }
+
+.ui-row > span {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ui-row strong { font-size: var(--fs-4); }
+
+.ui-row small {
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-log {
+  min-height: 280px;
+  margin: 0;
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: #050607;
+  color: #c8d0da;
+  font: var(--fs-1) / 1.6 var(--font-mono);
+  white-space: pre-wrap;
+  user-select: text;
+}
+
+/* --- Empty states -------------------------------------------------------- */
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  padding: var(--s-7);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  color: var(--text-3);
+  text-align: center;
+}
+
+.ui-empty > svg { color: var(--accent); opacity: 0.7; }
+
+.ui-empty h2 {
+  margin: var(--s-4) 0 0;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--fs-7);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ui-empty p {
+  max-width: 42ch;
+  margin: var(--s-2) 0 var(--s-5);
+  color: var(--text-2);
+  font-size: var(--fs-4);
+}
+
+.ui-empty--compact {
+  min-height: 160px;
+  padding: var(--s-5);
+  border-style: solid;
+}
+
+.ui-empty--compact strong {
+  margin-top: var(--s-2);
+  color: var(--text);
+  font-size: var(--fs-4);
+}
+
+.ui-empty--compact small { color: var(--text-3); font-size: var(--fs-2); }
+
+/* --- Misc ---------------------------------------------------------------- */
+.ui-spin { animation: spin 850ms linear infinite; }
+
+.ui-badge {
+  flex: none;
+  padding: 3px 7px;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-0);
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ui-badge--ok { background: rgba(123, 212, 107, 0.12); color: #bfeea9; }
+.ui-badge--warn { background: rgba(242, 195, 60, 0.12); color: #ecd275; }
+.ui-badge--bad { background: var(--danger-soft); color: var(--danger-text); }
+
+@media (max-width: 860px) {
+  .ui-page { padding: var(--s-5) var(--s-4) var(--s-7); }
+  .ui-page-head { flex-direction: column; align-items: stretch; gap: var(--s-4); }
+  .ui-form-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -28,6 +28,8 @@ export default defineConfig({
   // Relative asset URLs keep the bundle working under the app://launcher origin.
   base: './',
   plugins: [react(), cspMeta()],
-  server: { port: 5173, strictPort: true },
+  // `allowedHosts` lets the renderer be previewed through a proxied hostname
+  // while the desktop shell keeps loading it from localhost.
+  server: { port: 5173, strictPort: true, allowedHosts: true },
   build: { outDir: 'dist', emptyOutDir: true },
 });

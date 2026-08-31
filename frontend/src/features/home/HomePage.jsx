@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CircleAlert, X } from 'lucide-react';
 import { bridge } from '../../lib/bridge.js';
+import { useRoute } from '../../lib/use-route.js';
 import { DISCORD_INVITE, NEWS, PARTNERED_SERVERS, WEBSTORE } from './data.js';
 import {
   useAccounts, useBackendVersion, useGameSession, useLaunchTarget, useServerStatus, useUpdater,
@@ -10,29 +11,28 @@ import HeroPanel from './HeroPanel.jsx';
 import InstanceShelf from './InstanceShelf.jsx';
 import InstancesPage from './InstancesPage.jsx';
 import NewsSection from './NewsSection.jsx';
+import PartnersPage from '../partners/PartnersPage.jsx';
 import RightRail from './RightRail.jsx';
+import SettingsPage from '../settings/SettingsPage.jsx';
 import SideRail from './SideRail.jsx';
 import TitleBar from './TitleBar.jsx';
 import './HomePage.css';
 
-const SECTION_LABELS = {
-  settings: 'Settings',
-};
-
 export default function HomePage() {
   const [notice, setNotice] = useState(null);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('play');
+  const [route, navigate] = useRoute();
   const onError = useCallback((message) => setNotice(message), []);
 
   const version = useBackendVersion();
   const updater = useUpdater(onError);
-  const { accounts, active, login, setActive, addOffline, loginMicrosoft } = useAccounts(onError);
+  const accountStore = useAccounts(onError);
+  const { accounts, active, login, setActive, addOffline, loginMicrosoft, remove } = accountStore;
   const { instance, instances, select, refresh, createDefault, creating } = useLaunchTarget(onError);
   const session = useGameSession(instance?.id ?? null, onError);
-  const serverStatuses = useServerStatus(PARTNERED_SERVERS);
+  const { statuses, refresh: refreshServers } = useServerStatus(PARTNERED_SERVERS);
 
-  /* The shell has one screen, so notices are transient rather than a log. */
+  /* Notices are transient rather than a log: the shell has no history surface. */
   useEffect(() => {
     if (!notice) return undefined;
     const timer = setTimeout(() => setNotice(null), 6000);
@@ -52,21 +52,15 @@ export default function HomePage() {
     session.launch({ server: address });
   }, [instance, session, onError]);
 
-  const navigate = useCallback((id) => {
-    if (['play', 'instances', 'content'].includes(id)) {
-      setActiveSection(id);
-      return;
-    }
-    if (id === 'partners') {
-      setActiveSection('play');
-      return;
-    }
+  const onNavigate = useCallback((id) => {
     if (id === 'store') {
       openExternal(WEBSTORE.url);
       return;
     }
-    onError(`${SECTION_LABELS[id] || id} is not available yet`);
-  }, [onError, openExternal]);
+    navigate(id);
+  }, [navigate, openExternal]);
+
+  const workspace = route !== 'play';
 
   return (
     <div className="app" data-testid="home-page">
@@ -86,11 +80,11 @@ export default function HomePage() {
         onLoginMicrosoft={loginMicrosoft}
       />
 
-      <div className={`app-body${activeSection === 'play' ? '' : ' app-body--workspace'}`}>
-        <SideRail active={activeSection} onNavigate={navigate} version={version} />
+      <div className={`app-body${workspace ? ' app-body--workspace' : ''}`}>
+        <SideRail active={route} onNavigate={onNavigate} version={version} />
 
-        {activeSection === 'play' ? (
-          <main className="main scroll-thin">
+        {route === 'play' ? (
+          <main className="main scroll-thin" data-testid="play-page">
             <HeroPanel
               username={active?.username}
               accountType={active?.type}
@@ -108,6 +102,7 @@ export default function HomePage() {
               activeId={instance?.id ?? null}
               onSelect={select}
               onCreate={createDefault}
+              onManage={() => navigate('instances')}
             />
 
             <div className="main-bottom">
@@ -116,7 +111,7 @@ export default function HomePage() {
           </main>
         ) : null}
 
-        {activeSection === 'instances' ? (
+        {route === 'instances' ? (
           <InstancesPage
             instances={instances}
             instance={instance}
@@ -124,11 +119,11 @@ export default function HomePage() {
             onSelect={select}
             onRefresh={refresh}
             onError={onError}
-            onOpenContent={() => setActiveSection('content')}
+            onOpenContent={() => navigate('content')}
           />
         ) : null}
 
-        {activeSection === 'content' ? (
+        {route === 'content' ? (
           <ContentPage
             instances={instances}
             instance={instance}
@@ -138,20 +133,49 @@ export default function HomePage() {
           />
         ) : null}
 
-        {activeSection === 'play' ? (
+        {route === 'partners' ? (
+          <PartnersPage
+            servers={PARTNERED_SERVERS}
+            statuses={statuses}
+            discord={DISCORD_INVITE}
+            webstore={WEBSTORE}
+            instance={instance}
+            session={session}
+            onRefresh={refreshServers}
+            onJoinServer={joinServer}
+            onOpenExternal={openExternal}
+          />
+        ) : null}
+
+        {route === 'settings' ? (
+          <SettingsPage
+            accounts={accounts}
+            active={active}
+            updater={updater}
+            version={version}
+            onSetActive={setActive}
+            onRemoveAccount={remove}
+            onAddAccount={() => setAccountOpen(true)}
+            onOpenExternal={openExternal}
+            onError={onError}
+          />
+        ) : null}
+
+        {route === 'play' ? (
           <RightRail
             discord={DISCORD_INVITE}
             webstore={WEBSTORE}
             servers={PARTNERED_SERVERS}
-            statuses={serverStatuses}
+            statuses={statuses}
             onOpenExternal={openExternal}
             onJoinServer={joinServer}
+            onSeeAll={() => navigate('partners')}
           />
         ) : null}
       </div>
 
       {notice ? (
-        <div className="notice" role="status" data-testid="notice">
+        <div className="notice" role="status" aria-live="polite" data-testid="notice">
           <CircleAlert size={15} strokeWidth={2.3} />
           <span className="notice-text">{notice}</span>
           <button
