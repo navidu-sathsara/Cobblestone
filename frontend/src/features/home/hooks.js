@@ -14,6 +14,35 @@ export function useBackendVersion() {
   return version;
 }
 
+/** Live desktop updater state plus explicit retry/install actions. */
+export function useUpdater(onError) {
+  const [state, setState] = useState({
+    status: 'idle', version: null, percent: null, transferred: null,
+    total: null, bytesPerSecond: null, message: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    bridge.updater?.getState()
+      .then((next) => { if (!cancelled && next) setState(next); })
+      .catch(() => undefined);
+    const off = subscribe('updater:state', (next) => { if (next) setState(next); });
+    return () => { cancelled = true; off(); };
+  }, []);
+
+  return {
+    ...state,
+    check: useCallback(
+      () => attempt(() => bridge.updater.check(), onError),
+      [onError],
+    ),
+    install: useCallback(
+      () => attempt(() => bridge.updater.install(), onError),
+      [onError],
+    ),
+  };
+}
+
 /**
  * Account list plus the active account, kept in sync through `auth:changed`.
  * Backs the titlebar account pill and its menu.

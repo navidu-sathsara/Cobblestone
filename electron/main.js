@@ -20,6 +20,7 @@ const { serializeError } = require('../backend/core/errors');
 const { version: appVersion } = require('../package.json');
 const { buildCsp, EXTERNAL_LINK_HOSTS } = require('./csp');
 const { createSenderValidator, isAllowedExternalUrl, resolveRendererFile } = require('./guards');
+const { createUpdaterController } = require('./updater');
 
 const RENDERER_ROOT = path.join(__dirname, '..', 'frontend', 'dist');
 const APP_SCHEME = 'app';
@@ -31,6 +32,7 @@ const RENDERER_URL = DEV_SERVER_URL || `${APP_SCHEME}://${APP_HOST}/index.html`;
 let launcher = null;
 let disposeBackendIpc = null;
 let mainWindow = null;
+let updaterController = null;
 let shuttingDown = false;
 
 protocol.registerSchemesAsPrivileged([
@@ -69,7 +71,7 @@ const isAllowedLink = (url) => isAllowedExternalUrl(url, EXTERNAL_LINK_HOSTS);
  * Registers the window-chrome and link channels the backend adapter does not
  * own, using the same validated `{ ok, value | error }` envelope.
  */
-function registerHostIpc() {
+function registerHostIpc(updater) {
   const channels = [];
   const handle = (channel, operation) => {
     ipcMain.handle(channel, async (event, payload = {}) => {
@@ -112,10 +114,19 @@ function registerHostIpc() {
     await shell.openExternal(url);
     return true;
   });
+  handle('updater:getState', () => updater.getState());
+  handle('updater:check', () => updater.check());
+  handle('updater:install', () => updater.install());
 
   return () => {
     for (const channel of channels) ipcMain.removeHandler(channel);
   };
+}
+
+function sendRendererEvent(name, payload) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('cobblestone:event', { name, payload });
+  }
 }
 
 /** Applies the CSP and refuses renderer-initiated permission requests. */
@@ -230,21 +241,20 @@ if (!app.requestSingleInstanceLock()) {
     hardenSession(session.defaultSession);
     
     const { autoUpdater } = require('electron-updater');
-    autoUpdater.checkForUpdatesAndNotify();
+    updaterController = createUpdaterController({ autoUpdater, app, emit: sendRendererEvent });
 
     disposeBackendIpc = registerElectronIpc({
       ipcMain,
       backend: launcher,
       validateSender,
-      eventSink: (name, payload) => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('cobblestone:event', { name, payload });
-        }
-      },
+      eventSink: sendRendererEvent,
     });
-    disposeHostIpc = registerHostIpc();
+    disposeHostIpc = registerHostIpc(updaterController);
 
     mainWindow = createWindow();
+    // The controller retains state if the check finishes before the renderer
+    // mounts; the renderer reads that snapshot before subscribing to updates.
+    updaterController.check();
     if (process.env.COBBLESTONE_CAPTURE) captureAndExit(mainWindow, process.env.COBBLESTONE_CAPTURE);
 
     app.on('activate', () => {
@@ -263,10 +273,10 @@ if (!app.requestSingleInstanceLock()) {
     (async () => {
       disposeHostIpc?.();
       disposeBackendIpc?.();
+      updaterController?.dispose();
       await launcher?.shutdown().catch(() => undefined);
       app.exit(0);
     })();
   });
 }
-
 

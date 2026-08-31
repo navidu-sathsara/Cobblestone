@@ -17,6 +17,7 @@ const EVENT_NAMES = new Set([
   'instance:created', 'instance:updated', 'instance:deleted', 'instance:operation',
   'content:install', 'content:removed', 'modpack:progress', 'backup:created',
   'game:install', 'game:state', 'game:progress', 'game:log', 'java:install', 'loader:install',
+  'updater:state',
 ]);
 
 const listeners = new Map();
@@ -94,6 +95,12 @@ contextBridge.exposeInMainWorld('cobblestone', {
   },
 
   openExternal: (url) => call('app:openExternal', { url }),
+
+  updater: {
+    getState: () => call('updater:getState'),
+    check: () => call('updater:check'),
+    install: () => call('updater:install'),
+  },
 
   on: subscribe,
 });

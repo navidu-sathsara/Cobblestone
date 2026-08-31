@@ -94,7 +94,7 @@ export function createMockBridge() {
 
     status: async () => ({
       name: 'Cobblestone',
-      version: '4.0.5',
+      version: '4.0.6',
       dataDirectory: '~/.cobblestone',
       runningGames: running ? [running] : [],
       downloads: [],
@@ -198,6 +198,15 @@ export function createMockBridge() {
     openExternal: async (url) => {
       window.open(url, '_blank', 'noopener,noreferrer');
       return true;
+    },
+
+    updater: {
+      getState: async () => ({
+        status: 'disabled', version: null, percent: null, transferred: null,
+        total: null, bytesPerSecond: null, message: 'Updates are available in installed builds only',
+      }),
+      check: async () => null,
+      install: async () => false,
     },
 
     on: (name, listener) => {

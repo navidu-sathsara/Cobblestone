@@ -4,8 +4,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { EventEmitter } = require('node:events');
 const { buildCsp, REMOTE_IMAGE_ORIGINS, EXTERNAL_LINK_HOSTS } = require('../electron/csp');
 const { createSenderValidator, isAllowedExternalUrl, resolveRendererFile } = require('../electron/guards');
+const { createUpdaterController } = require('../electron/updater');
 
 const RENDERER_ROOT = path.join(__dirname, '..', 'frontend', 'dist');
 
@@ -83,6 +85,43 @@ test('renderer protocol refuses traversal, foreign hosts, and the root itself', 
   assert.equal(resolveRendererFile(root, 'app://launcher/..%2f..%2fetc/passwd', 'launcher').status, 403);
   assert.equal(resolveRendererFile(root, 'app://elsewhere/index.html', 'launcher').status, 404);
   assert.equal(resolveRendererFile(root, 'app://launcher/a%00b', 'launcher').status, 400);
+});
+
+test('updater controller publishes download progress and installs only when ready', async () => {
+  class FakeUpdater extends EventEmitter {
+    async checkForUpdates() {
+      this.emit('checking-for-update');
+      this.emit('update-available', { version: '4.0.6' });
+      return { updateInfo: { version: '4.0.6' } };
+    }
+
+    quitAndInstall(silent, forceRun) {
+      this.installArgs = [silent, forceRun];
+    }
+  }
+
+  const autoUpdater = new FakeUpdater();
+  const published = [];
+  const controller = createUpdaterController({
+    autoUpdater,
+    app: { isPackaged: true, getVersion: () => '4.0.5' },
+    emit: (name, payload) => published.push([name, payload]),
+  });
+
+  await controller.check();
+  assert.equal(controller.getState().status, 'available');
+  assert.equal(controller.install(), false);
+  autoUpdater.emit('download-progress', {
+    percent: 42.5, transferred: 425, total: 1000, bytesPerSecond: 100,
+  });
+  assert.equal(controller.getState().percent, 42.5);
+  autoUpdater.emit('update-downloaded', { version: '4.0.6' });
+  assert.equal(controller.getState().status, 'downloaded');
+  assert.equal(controller.install(), true);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(autoUpdater.installArgs, [false, true]);
+  assert.ok(published.every(([name]) => name === 'updater:state'));
+  controller.dispose();
 });
 
 test('the built renderer embeds exactly the production CSP', (t) => {

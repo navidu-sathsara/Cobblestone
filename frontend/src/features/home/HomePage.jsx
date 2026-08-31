@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { CircleAlert, X } from 'lucide-react';
 import { bridge } from '../../lib/bridge.js';
 import { DISCORD_INVITE, FRIENDS, NEWS, PARTNERED_SERVERS, WEBSTORE } from './data.js';
-import { useAccounts, useBackendVersion, useGameSession, useLaunchTarget, useServerStatus } from './hooks.js';
+import {
+  useAccounts, useBackendVersion, useGameSession, useLaunchTarget, useServerStatus, useUpdater,
+} from './hooks.js';
 import FriendsPanel from './FriendsPanel.jsx';
 import HeroPanel from './HeroPanel.jsx';
 import InstanceShelf from './InstanceShelf.jsx';
@@ -26,6 +28,7 @@ export default function HomePage() {
   const onError = useCallback((message) => setNotice(message), []);
 
   const version = useBackendVersion();
+  const updater = useUpdater(onError);
   const { accounts, active, login, setActive, addOffline, loginMicrosoft } = useAccounts(onError);
   const { instance, instances, select, createDefault, creating } = useLaunchTarget(onError);
   const session = useGameSession(instance?.id ?? null, onError);
@@ -64,6 +67,7 @@ export default function HomePage() {
         active={active}
         session={session}
         instance={instance}
+        updater={updater}
         accountOpen={accountOpen}
         onAccountOpenChange={setAccountOpen}
         login={login}

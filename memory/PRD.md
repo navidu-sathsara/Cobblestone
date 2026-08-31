@@ -20,6 +20,13 @@ Hard constraints from the user: never run/start/build the app (no npm/pnpm run, 
 - test/ — 5 Node test-runner files. Packaging (electron-builder/auto-update) not configured.
 
 ## Done
+- 2026-08-31: v4.0.6 updater feedback and hero scene:
+  - Added a main-process updater controller with serializable checking, available,
+    download-progress, downloaded, error, and installing states.
+  - Added narrow updater IPC, a titlebar indicator, automatic update-found/ready
+    popovers, live percentage/byte progress, retry, and Restart & Install.
+  - Filled the hero with a CSS-rendered block landscape and a stronger first-run
+    message; removed the decorative shield tile from the sign-in modal.
 - 2026-08-31: v4.0.5 account/home interaction update:
   - Replaced the cramped titlebar account menu with a compact account trigger and a
     full sign-in/profile modal with saved profiles, Microsoft progress, inline errors,

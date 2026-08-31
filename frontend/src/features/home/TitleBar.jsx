@@ -1,6 +1,7 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Check, ChevronDown, LoaderCircle, LogIn, Minus, Plus, ShieldCheck, Square, User, X,
+  Check, ChevronDown, CircleAlert, Download, LoaderCircle, LogIn, Minus, Plus,
+  RefreshCw, RotateCcw, Square, User, X,
 } from 'lucide-react';
 import { bridge } from '../../lib/bridge.js';
 import { headUrl } from '../../lib/format.js';
@@ -77,7 +78,6 @@ function AccountModal({ accounts, active, login, onSelect, onAddOffline, onLogin
         ref={panelRef}
       >
         <header className="account-modal-head">
-          <span className="account-modal-mark"><ShieldCheck size={20} strokeWidth={2.2} /></span>
           <span className="account-modal-heading">
             <span className="account-modal-kicker">Cobblestone account</span>
             <h2 id="account-modal-title">Choose how you play</h2>
@@ -173,6 +173,107 @@ function AccountModal({ accounts, active, login, onSelect, onAddOffline, onLogin
   );
 }
 
+const UPDATE_LABELS = {
+  checking: 'Checking…',
+  available: 'Update found',
+  downloading: 'Downloading',
+  downloaded: 'Update ready',
+  error: 'Update failed',
+};
+
+function formatBytes(value) {
+  if (!Number.isFinite(value) || value <= 0) return null;
+  if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(1)} GB`;
+  return `${(value / 1024 ** 2).toFixed(1)} MB`;
+}
+
+function UpdateControl({ updater }) {
+  const [open, setOpen] = useState(false);
+  const panel = useRef(null);
+  const previousStatus = useRef(updater?.status);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(panel, open, close);
+
+  useEffect(() => {
+    const next = updater?.status;
+    if (next !== previousStatus.current && ['available', 'downloaded', 'error'].includes(next)) {
+      setOpen(true);
+    }
+    previousStatus.current = next;
+  }, [updater?.status]);
+
+  const visible = Boolean(UPDATE_LABELS[updater?.status]);
+  if (!visible) return null;
+  const downloading = updater.status === 'downloading' || updater.status === 'available';
+  const percent = Number.isFinite(updater.percent) ? Math.round(updater.percent) : 0;
+  const complete = updater.status === 'downloaded';
+  const failed = updater.status === 'error';
+  const transferred = formatBytes(updater.transferred);
+  const total = formatBytes(updater.total);
+
+  return (
+    <div className={`update-control update-control--${updater.status}`}>
+      <button
+        type="button"
+        className="update-trigger"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        data-testid="update-indicator"
+        onClick={() => setOpen((value) => !value)}
+      >
+        {failed ? <CircleAlert size={13} /> : complete ? <RotateCcw size={13} /> : <Download size={13} />}
+        <span>{downloading && updater.status === 'downloading' ? `${percent}%` : UPDATE_LABELS[updater.status]}</span>
+      </button>
+
+      {open ? (
+        <section className="update-popover" role="dialog" aria-label="Application update" ref={panel}>
+          <header className="update-popover-head">
+            <span className={`update-popover-icon${failed ? ' update-popover-icon--error' : ''}`}>
+              {failed ? <CircleAlert size={17} /> : complete ? <RotateCcw size={17} /> : <Download size={17} />}
+            </span>
+            <span>
+              <strong>{UPDATE_LABELS[updater.status]}</strong>
+              {updater.version ? <small>Cobblestone {updater.version}</small> : null}
+            </span>
+            <button type="button" className="update-popover-close" aria-label="Close update status" onClick={close}>
+              <X size={14} />
+            </button>
+          </header>
+
+          <p className={failed ? 'update-message update-message--error' : 'update-message'}>
+            {updater.message || 'Preparing the latest Cobblestone update.'}
+          </p>
+
+          {downloading ? (
+            <div className="update-progress-wrap">
+              <span className="update-progress-track">
+                <span className="update-progress-value" style={{ width: `${Math.max(percent, 2)}%` }} />
+              </span>
+              <span className="update-progress-meta">
+                <strong>{updater.status === 'available' ? 'Starting…' : `${percent}%`}</strong>
+                {transferred && total ? <small>{transferred} of {total}</small> : null}
+              </span>
+            </div>
+          ) : null}
+
+          {complete ? (
+            <button type="button" className="update-action" data-testid="update-install" onClick={() => updater.install()}>
+              <RotateCcw size={14} />
+              Restart &amp; install
+            </button>
+          ) : null}
+          {failed ? (
+            <button type="button" className="update-action update-action--secondary" onClick={() => updater.check()}>
+              <RefreshCw size={14} />
+              Try again
+            </button>
+          ) : null}
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
 function AccountControl({ open, onOpenChange, ...props }) {
   const panel = useRef(null);
   const close = useCallback(() => onOpenChange(false), [onOpenChange]);
@@ -203,7 +304,7 @@ function AccountControl({ open, onOpenChange, ...props }) {
   );
 }
 
-export default function TitleBar({ session, instance, accountOpen, onAccountOpenChange, ...account }) {
+export default function TitleBar({ session, instance, updater, accountOpen, onAccountOpenChange, ...account }) {
   return (
     <header className="titlebar">
       <div className="titlebar-brand">
@@ -218,6 +319,7 @@ export default function TitleBar({ session, instance, accountOpen, onAccountOpen
 
       <div className="titlebar-drag">
         <SessionChip session={session} instance={instance} />
+        <UpdateControl updater={updater} />
       </div>
 
       <AccountControl open={accountOpen} onOpenChange={onAccountOpenChange} {...account} />

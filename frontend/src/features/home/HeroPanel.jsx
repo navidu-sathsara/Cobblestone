@@ -113,6 +113,14 @@ export default function HeroPanel({
   return (
     <section className="hero rise" data-testid="hero-panel">
       <div className="hero-sky" aria-hidden="true" />
+      <div className="hero-landscape" aria-hidden="true">
+        <span className="hero-moon" />
+        <span className="hero-ridge hero-ridge--back" />
+        <span className="hero-ridge hero-ridge--front" />
+        <span className="hero-ore hero-ore--one" />
+        <span className="hero-ore hero-ore--two" />
+        <span className="hero-ore hero-ore--three" />
+      </div>
       {heroImage ? (
         <div className="hero-photo" style={{ backgroundImage: `url(${heroImage})` }} aria-hidden="true" />
       ) : null}
@@ -128,8 +136,12 @@ export default function HeroPanel({
           </span>
 
           <h1 className="hero-title" data-testid="hero-instance-name">
-            {instance?.name || 'No instance yet'}
+            {instance?.name || 'Ready to explore'}
           </h1>
+
+          {!instance ? (
+            <p className="hero-subtitle">Build your first world, then keep every version and modpack in one place.</p>
+          ) : null}
 
           <div className="hero-chips">
             <span className={`chip${instance?.installState === 'broken' ? ' chip--warn' : ' chip--accent'}`}>
