@@ -111,7 +111,7 @@ export default function HeroPanel({
   const lastPlayed = formatRelative(instance?.lastPlayedAt);
 
   return (
-    <section className="hero rise" data-testid="hero-panel">
+    <section className="hero" data-testid="hero-panel">
       <div className="hero-sky" aria-hidden="true" />
       <div className="hero-landscape" aria-hidden="true">
         <span className="hero-moon" />

@@ -20,6 +20,10 @@ Hard constraints from the user: never run/start/build the app (no npm/pnpm run, 
 - test/ — 5 Node test-runner files. Packaging (electron-builder/auto-update) not configured.
 
 ## Done
+- 2026-08-31: v4.1.1 hero paint hardening:
+  - Removed delayed opacity animations from critical hero content and assigned
+    explicit isolated z-index layers to the scene, fade, copy, controls, and
+    player stage so hero items cannot remain hidden or paint behind the backdrop.
 - 2026-08-31: v4.1.0 instance and content system:
   - Removed the presentation-only Friends panel and added functional Instances
     and Content routes to the primary navigation.
