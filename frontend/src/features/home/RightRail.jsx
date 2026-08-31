@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Coins, MessagesSquare, Play, Server, ShoppingBag } from 'lucide-react';
+import { Coins, MessagesSquare, Play, Server, ShoppingCart } from 'lucide-react';
 import { formatCompact, serverIconUrl } from '../../lib/format.js';
 import './RightRail.css';
 
@@ -91,7 +91,7 @@ export default function RightRail({ discord, webstore, servers, statuses, onOpen
       />
       <PromoCard
         variant="store"
-        Icon={ShoppingBag}
+        Icon={ShoppingCart}
         Watermark={Coins}
         title="Webstore"
         subtitle={webstore.label}

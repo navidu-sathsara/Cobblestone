@@ -1,4 +1,4 @@
-import { Boxes, Handshake, Play, Settings, ShoppingBag, Sparkles } from 'lucide-react';
+import { Handshake, LayoutGrid, Play, Settings, ShoppingCart, Sparkles } from 'lucide-react';
 import './SideRail.css';
 
 /**
@@ -7,10 +7,10 @@ import './SideRail.css';
  */
 const NAV = [
   { id: 'play', label: 'Play', Icon: Play },
-  { id: 'profiles', label: 'Profiles', Icon: Boxes },
+  { id: 'profiles', label: 'Profiles', Icon: LayoutGrid },
   { id: 'content', label: 'Content', Icon: Sparkles },
   { id: 'partners', label: 'Partners', Icon: Handshake },
-  { id: 'store', label: 'Store', Icon: ShoppingBag },
+  { id: 'store', label: 'Store', Icon: ShoppingCart },
 ];
 
 export default function SideRail({ active = 'play', onNavigate = () => {}, version }) {

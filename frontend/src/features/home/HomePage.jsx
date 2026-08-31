@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { TriangleAlert, X } from 'lucide-react';
+import { CircleAlert, X } from 'lucide-react';
 import { bridge } from '../../lib/bridge.js';
 import { DISCORD_INVITE, FRIENDS, NEWS, PARTNERED_SERVERS, WEBSTORE } from './data.js';
 import { useAccounts, useBackendVersion, useGameSession, useLaunchTarget, useServerStatus } from './hooks.js';
@@ -110,7 +110,7 @@ export default function HomePage() {
 
       {notice ? (
         <div className="notice" role="status" data-testid="notice">
-          <TriangleAlert size={15} strokeWidth={2.3} />
+          <CircleAlert size={15} strokeWidth={2.3} />
           <span className="notice-text">{notice}</span>
           <button
             type="button"
