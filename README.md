@@ -56,8 +56,9 @@ that single source — as a response header by the main process and as a `<meta>
 tag baked into the production bundle.
 
 `frontend/` is a React renderer whose home page reads live launcher state:
-accounts, instances, launch/stop with progress, and native server-list pings for
-partnered-server player counts. It talks only to the narrow bridge installed by
+accounts, instances (hero launch target plus a shelf of every instance),
+launch/stop with progress, and native server-list pings for partnered-server
+player counts. It talks only to the narrow bridge installed by
 `electron/preload.js`; opened in a plain browser (`pnpm frontend:dev`) it falls
 back to a mock so the UI can be developed without the shell.
 
