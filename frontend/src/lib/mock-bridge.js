@@ -35,6 +35,33 @@ const MOCK_INSTANCE = {
   },
 };
 
+const MOCK_INSTANCES = [
+  MOCK_INSTANCE,
+  {
+    ...MOCK_INSTANCE,
+    id: 'mock-instance-forge',
+    name: 'Iron & Steam',
+    loader: 'forge',
+    loaderVersion: '47.3.0',
+    resolvedVersionId: 'forge-1.20.1-47.3.0',
+    minecraftVersion: '1.20.1',
+    playTimeSeconds: 4_260,
+    lastPlayedAt: Date.now() - 3 * 86_400_000,
+  },
+  {
+    ...MOCK_INSTANCE,
+    id: 'mock-instance-vanilla',
+    name: 'Snapshot Sandbox',
+    loader: 'vanilla',
+    loaderVersion: null,
+    resolvedVersionId: null,
+    minecraftVersion: '1.21.11',
+    playTimeSeconds: 0,
+    lastPlayedAt: null,
+    installState: 'new',
+  },
+];
+
 /** Player counts from the reference mockup, so the preview matches the design. */
 const MOCK_PLAYERS = {
   'mc.hypixel.net': 35_000,
@@ -71,7 +98,7 @@ export function createMockBridge() {
       dataDirectory: '~/.cobblestone',
       runningGames: running ? [running] : [],
       downloads: [],
-      instances: 1,
+      instances: MOCK_INSTANCES.length,
       accounts: accounts.length,
       providers: ['modrinth', 'curseforge'],
     }),
@@ -111,7 +138,7 @@ export function createMockBridge() {
     },
 
     instances: {
-      list: async () => [MOCK_INSTANCE],
+      list: async () => [...MOCK_INSTANCES],
       create: async () => MOCK_INSTANCE,
     },
 

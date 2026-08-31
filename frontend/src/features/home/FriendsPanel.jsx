@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, User } from 'lucide-react';
+import { ArrowUpRight, User } from 'lucide-react';
 import { headUrl } from '../../lib/format.js';
 import './FriendsPanel.css';
 
@@ -8,17 +8,12 @@ function FriendHead({ name }) {
   if (failed) {
     return (
       <span className="friend-head friend-head--fallback">
-        <User size={17} strokeWidth={2.2} />
+        <User size={16} strokeWidth={2.2} />
       </span>
     );
   }
   return (
-    <img
-      className="friend-head"
-      src={headUrl(name, 60)}
-      alt=""
-      onError={() => setFailed(true)}
-    />
+    <img className="friend-head" src={headUrl(name, 60)} alt="" onError={() => setFailed(true)} />
   );
 }
 
@@ -27,30 +22,34 @@ function FriendHead({ name }) {
  * presentation data supplied by the caller (see ./data.js).
  */
 export default function FriendsPanel({ friends, onViewMore }) {
+  const online = friends.filter((friend) => friend.presence !== 'offline').length;
+
   return (
-    <section className="friends">
+    <section className="friends" data-testid="friends-panel">
       <header className="friends-head">
-        <h2 className="eyebrow">Friends</h2>
-        <button type="button" className="friends-more" onClick={onViewMore}>
-          View More
-          <ExternalLink size={11} strokeWidth={2.4} />
-        </button>
+        <h2 className="eyebrow eyebrow--muted">Friends</h2>
+        <span className="friends-online">{online} online</span>
       </header>
 
       <ul className="friends-list scroll-hidden">
-        {friends.map((friend) => (
+        {friends.map((friend, index) => (
           <li key={friend.id}>
-            <div className="friend-row">
-              <span className={`dot dot--${friend.presence}`} />
+            <div className="friend-row" style={{ animationDelay: `${index * 40}ms` }}>
               <FriendHead name={friend.name} />
               <span className="friend-text">
                 <span className="friend-name">{friend.name}</span>
                 <span className="friend-status">{friend.status}</span>
               </span>
+              <span className={`dot dot--${friend.presence}`} />
             </div>
           </li>
         ))}
       </ul>
+
+      <button type="button" className="friends-more" data-testid="friends-view-more" onClick={onViewMore}>
+        View more
+        <ArrowUpRight size={12} strokeWidth={2.6} />
+      </button>
     </section>
   );
 }

@@ -8,28 +8,38 @@
  */
 
 /**
- * News cards. `image` is optional: when omitted the card paints a CSS gradient
- * with the wordmark, which is what the shipped build does. Point `image` at a
- * real asset or URL to show artwork instead (remote hosts must be added to the
- * img-src allowlist in electron/csp.js).
+ * News cards. `image` is optional: when omitted the card paints a CSS artwork
+ * gradient behind the wordmark, which is what the shipped build does. Point
+ * `image` at a real asset or URL to show artwork instead (remote hosts must be
+ * added to the img-src allowlist in electron/csp.js). `tone` is one of
+ * 'copper' | 'amethyst' | 'verdant'.
  */
 export const NEWS = [
   {
     id: 'cosmetics',
     title: 'Cosmetics',
-    wordmark: 'COSMETICS',
+    wordmark: 'Cosmetics',
     blurb: 'New capes, wings and hats',
     url: 'https://cobblestone.net/news/cosmetics',
-    tone: 'violet',
+    tone: 'amethyst',
     image: null,
   },
   {
     id: 'giveaways',
     title: 'Giveaways',
-    wordmark: 'GIVEAWAYS',
+    wordmark: 'Giveaways',
     blurb: 'Monthly community giveaways',
     url: 'https://cobblestone.net/news/giveaways',
-    tone: 'azure',
+    tone: 'copper',
+    image: null,
+  },
+  {
+    id: 'modpacks',
+    title: 'Modpacks',
+    wordmark: 'Modpacks',
+    blurb: 'One-click Modrinth packs',
+    url: 'https://modrinth.com/modpacks',
+    tone: 'verdant',
     image: null,
   },
 ];

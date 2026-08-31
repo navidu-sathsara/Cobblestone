@@ -1,62 +1,61 @@
 .aside {
   display: flex;
   flex-direction: column;
-  width: var(--aside-w);
-  /* Without this the server list would size the whole window row to its
-     content instead of scrolling inside it. */
+  gap: 10px;
   min-height: 0;
-  padding: 3px 14px 20px 0;
+  padding: 16px 14px 14px;
+  background: linear-gradient(180deg, rgba(6, 8, 11, 0.9), rgba(6, 8, 11, 0.55));
+  border-left: 1px solid var(--edge);
+  overflow-y: auto;
 }
 
 .promo {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 9px;
-  height: 58px;
-  padding: 0 11px;
-  border-radius: var(--radius-card);
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--edge-strong);
   overflow: hidden;
+  text-align: left;
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+  animation: rise 400ms var(--ease) both;
 }
 
-.promo + .promo {
-  margin-top: 16px;
+.promo:hover {
+  transform: translateY(-2px);
 }
 
 .promo--discord {
-  background: linear-gradient(100deg, var(--discord-from) 0%, #343ea6 46%, var(--discord-to) 100%);
+  background: linear-gradient(140deg, var(--discord-from), var(--discord-to));
+  box-shadow: 0 10px 26px rgba(88, 101, 242, 0.22);
 }
 
 .promo--store {
-  background: linear-gradient(100deg, var(--store-from) 0%, #2b9a4a 46%, var(--store-to) 100%);
+  background: linear-gradient(140deg, var(--store-from), var(--store-to));
+  box-shadow: 0 10px 26px rgba(63, 191, 106, 0.18);
+  animation-delay: 60ms;
 }
 
 .promo-watermark {
   position: absolute;
-  right: -12px;
-  bottom: -22px;
-  color: rgba(255, 255, 255, 0.14);
+  top: -22px;
+  right: -18px;
+  color: rgba(255, 255, 255, 0.13);
+  pointer-events: none;
 }
 
 .promo-badge {
   display: grid;
   flex: none;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-}
-
-.promo--discord .promo-badge {
-  background: #5865f2;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.promo--store .promo-badge {
-  background: #ffffff;
-  color: #16642c;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .promo-text {
@@ -64,16 +63,18 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  line-height: 1.3;
 }
 
 .promo-title {
-  font-size: 12.5px;
+  font-family: var(--font-display);
+  font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .promo-subtitle {
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(255, 255, 255, 0.74);
   font-size: 9.5px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -82,70 +83,70 @@
 
 .promo-action {
   flex: none;
-  height: 21px;
-  padding: 0 9px;
-  border-radius: 5px;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  transition: filter 120ms ease;
+  transition: background 160ms var(--ease);
 }
 
-.promo-action:hover {
-  filter: brightness(1.12);
-}
-
-.promo--discord .promo-action {
-  background: var(--discord-pill);
-  color: #ffffff;
-}
-
-.promo--store .promo-action {
-  background: #ffffff;
-  color: #16642c;
+.promo:hover .promo-action {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .aside-heading {
-  align-self: center;
-  margin: 18px 0 11px;
+  margin-top: 8px;
+  padding-left: 2px;
 }
 
 .server-list {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 13px;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
-  overflow-y: auto;
 }
 
 .server-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 9px;
   width: 100%;
-  height: 56px;
-  padding: 0 12px;
-  border-radius: var(--radius-row);
-  background: var(--panel-bg);
-  border: 1px solid var(--line);
+  padding: 8px 9px 8px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
   text-align: left;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 160ms var(--ease), border-color 160ms var(--ease);
+  animation: rise 400ms var(--ease) both;
 }
 
 .server-row:hover {
-  background: var(--panel-bg-hover);
-  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--edge);
+}
+
+/* Thin accent stripe carrying each partner's brand colour. */
+.server-accent {
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 3px;
+  width: 2px;
+  border-radius: 2px;
+  opacity: 0.7;
 }
 
 .server-icon {
   flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
   object-fit: cover;
   image-rendering: pixelated;
 }
@@ -153,7 +154,7 @@
 .server-icon--fallback {
   display: grid;
   place-items: center;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(0, 0, 0, 0.55);
 }
 
 .server-text {
@@ -161,20 +162,20 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  line-height: 1.3;
 }
 
 .server-name {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .server-address {
-  color: var(--text-muted);
-  font-size: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -185,13 +186,46 @@
   flex: none;
   align-items: center;
   gap: 6px;
+  transition: opacity 160ms var(--ease);
 }
 
 .server-count {
-  min-width: 40px;
   color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Swapped in for the player count on hover, so the row's action is explicit. */
+.server-join {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--copper-300), var(--copper-600));
+  color: #241203;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.8);
+  transition: opacity 160ms var(--ease), transform 160ms var(--ease);
+}
+
+.server-row:hover .server-meta {
+  opacity: 0;
+}
+
+.server-row:hover .server-join {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.aside-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--text-faint);
+  font-size: 9.5px;
+  text-align: center;
 }

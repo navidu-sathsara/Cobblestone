@@ -1,37 +1,32 @@
 .friends {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  /* Lets the list scroll inside the fixed row height instead of overflowing. */
-  min-height: 0;
+  padding: 11px 11px 9px;
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--ink-100), var(--ink-050));
+  border: 1px solid var(--edge);
 }
 
 .friends-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 9px;
+  padding: 0 2px 8px;
 }
 
-.friends-more {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-muted);
-  font-size: 10.5px;
-  font-weight: 600;
-  transition: color 120ms ease;
-}
-
-.friends-more:hover {
-  color: var(--text);
+.friends-online {
+  color: var(--lime);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .friends-list {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 12px;
+  gap: 2px;
+  max-height: 132px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -41,27 +36,25 @@
 .friend-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 48px;
-  padding: 0 12px;
-  border-radius: var(--radius-row);
-  background: var(--panel-bg);
-  border: 1px solid var(--line);
-  transition: background 120ms ease;
+  gap: 9px;
+  padding: 6px 7px;
+  border-radius: var(--r-sm);
+  transition: background 140ms var(--ease);
+  animation: rise 380ms var(--ease) both;
 }
 
 .friend-row:hover {
-  background: var(--panel-bg-hover);
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .friend-head {
   flex: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 5px;
-  background: #232935;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   object-fit: cover;
   image-rendering: pixelated;
+  background: #232935;
 }
 
 .friend-head--fallback {
@@ -72,14 +65,14 @@
 
 .friend-text {
   display: flex;
+  flex: 1;
   flex-direction: column;
   min-width: 0;
-  line-height: 1.3;
 }
 
 .friend-name {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -87,8 +80,28 @@
 
 .friend-status {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 9.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.friends-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 7px 0;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-dim);
+  font-size: 10.5px;
+  font-weight: 650;
+  transition: background 140ms var(--ease), color 140ms var(--ease);
+}
+
+.friends-more:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
 }
