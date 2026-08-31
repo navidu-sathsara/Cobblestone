@@ -90,6 +90,10 @@ class InstanceService {
 
   list() { return this.store.readSync().instances; }
 
+  deleted() {
+    return this.store.readSync().trash.map(({ instance, deletedAt }) => ({ instance, deletedAt }));
+  }
+
   get(id) {
     const instance = this.list().find((item) => item.id === id);
     if (!instance) throw new NotFoundError('Instance', id);

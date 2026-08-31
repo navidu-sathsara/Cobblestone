@@ -13,6 +13,9 @@ const { redact } = require('../backend/services/game-service');
 const { createLauncherBackend } = require('../backend');
 const { LauncherPaths } = require('../backend/core/paths');
 const { AccountService } = require('../backend/services/account-service');
+const { InstanceService } = require('../backend/services/instance-service');
+const { ModService } = require('../backend/services/mod-service');
+const { ProviderRegistry } = require('../backend/providers/provider-registry');
 
 test('loader metadata normalizes all supported pack loaders', () => {
   assert.deepEqual(loaderFromDependencies({ minecraft: '1.21.1', 'fabric-loader': '0.16.0' }), {
@@ -103,4 +106,47 @@ test('local content can be imported, verified, toggled, and removed safely', asy
   await backend.mods.setEnabled(instance.id, installed.key, true);
   await backend.mods.remove(instance.id, installed.key);
   assert.equal(backend.mods.list(instance.id).length, 0);
+});
+
+test('non-mod content compatibility does not filter releases by mod loader', async (t) => {
+  const directory = await fsp.mkdtemp(path.join(os.tmpdir(), 'cobblestone-resourcepack-'));
+  t.after(() => fsp.rm(directory, { recursive: true, force: true }));
+  const paths = new LauncherPaths(directory).ensure();
+  const events = new EventEmitter();
+  const instances = new InstanceService(paths, events);
+  const instance = await instances.create({ name: 'Fabric', minecraftVersion: '1.21.1', loader: 'fabric' });
+  const requestedLoaders = [];
+  const provider = {
+    id: 'test',
+    project: async () => ({ provider: 'test', projectId: 'pack', title: 'Pack', projectType: 'resourcepack' }),
+    versions: async (_id, options) => {
+      requestedLoaders.push(options.loader);
+      return [{
+        provider: 'test', projectId: 'pack', versionId: 'v1', versionNumber: '1.0.0',
+        dependencies: [], files: [],
+      }];
+    },
+    selectFile: async () => ({ filename: 'pack.zip', url: 'https://example.test/pack.zip', hashes: {}, size: 4 }),
+  };
+  const settings = { get: () => ({
+    mods: {
+      preferredProvider: 'test', releaseChannels: ['release'], installRequiredDependencies: false,
+      updatePinned: false,
+    },
+    instances: { autoBackupBeforeUpdates: false },
+  }) };
+  const downloads = {
+    download: async ({ destination }) => {
+      await fsp.mkdir(path.dirname(destination), { recursive: true });
+      await fsp.writeFile(destination, 'pack');
+    },
+  };
+  const mods = new ModService(
+    paths, settings, instances, new ProviderRegistry([provider]), downloads, events,
+  );
+
+  const installed = await mods.install(instance.id, { provider: 'test', projectId: 'pack' });
+  assert.equal(installed.folder, 'resourcepacks');
+  await mods.checkUpdates(instance.id);
+  assert.deepEqual(requestedLoaders, [undefined, undefined]);
 });

@@ -2,12 +2,12 @@ import { Handshake, LayoutGrid, Play, Settings, ShoppingCart, Sparkles } from 'l
 import './SideRail.css';
 
 /**
- * Only "Play" has a screen so far; the rest are declared here so the rail is
- * complete and the active-state styling is exercised.
+ * Instances and Content are full local-library screens. Community/store links
+ * remain routed by the home shell so they can share its trusted URL policy.
  */
 const NAV = [
   { id: 'play', label: 'Play', Icon: Play },
-  { id: 'profiles', label: 'Profiles', Icon: LayoutGrid },
+  { id: 'instances', label: 'Instances', Icon: LayoutGrid },
   { id: 'content', label: 'Content', Icon: Sparkles },
   { id: 'partners', label: 'Partners', Icon: Handshake },
   { id: 'store', label: 'Store', Icon: ShoppingCart },

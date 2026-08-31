@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CircleAlert, X } from 'lucide-react';
 import { bridge } from '../../lib/bridge.js';
-import { DISCORD_INVITE, FRIENDS, NEWS, PARTNERED_SERVERS, WEBSTORE } from './data.js';
+import { DISCORD_INVITE, NEWS, PARTNERED_SERVERS, WEBSTORE } from './data.js';
 import {
   useAccounts, useBackendVersion, useGameSession, useLaunchTarget, useServerStatus, useUpdater,
 } from './hooks.js';
-import FriendsPanel from './FriendsPanel.jsx';
+import ContentPage from './ContentPage.jsx';
 import HeroPanel from './HeroPanel.jsx';
 import InstanceShelf from './InstanceShelf.jsx';
+import InstancesPage from './InstancesPage.jsx';
 import NewsSection from './NewsSection.jsx';
 import RightRail from './RightRail.jsx';
 import SideRail from './SideRail.jsx';
@@ -15,22 +16,19 @@ import TitleBar from './TitleBar.jsx';
 import './HomePage.css';
 
 const SECTION_LABELS = {
-  profiles: 'Profiles',
-  content: 'Content',
-  partners: 'Partners',
-  store: 'Store',
   settings: 'Settings',
 };
 
 export default function HomePage() {
   const [notice, setNotice] = useState(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('play');
   const onError = useCallback((message) => setNotice(message), []);
 
   const version = useBackendVersion();
   const updater = useUpdater(onError);
   const { accounts, active, login, setActive, addOffline, loginMicrosoft } = useAccounts(onError);
-  const { instance, instances, select, createDefault, creating } = useLaunchTarget(onError);
+  const { instance, instances, select, refresh, createDefault, creating } = useLaunchTarget(onError);
   const session = useGameSession(instance?.id ?? null, onError);
   const serverStatuses = useServerStatus(PARTNERED_SERVERS);
 
@@ -55,8 +53,20 @@ export default function HomePage() {
   }, [instance, session, onError]);
 
   const navigate = useCallback((id) => {
-    if (id !== 'play') onError(`${SECTION_LABELS[id]} is not part of the home page yet`);
-  }, [onError]);
+    if (['play', 'instances', 'content'].includes(id)) {
+      setActiveSection(id);
+      return;
+    }
+    if (id === 'partners') {
+      setActiveSection('play');
+      return;
+    }
+    if (id === 'store') {
+      openExternal(WEBSTORE.url);
+      return;
+    }
+    onError(`${SECTION_LABELS[id] || id} is not available yet`);
+  }, [onError, openExternal]);
 
   return (
     <div className="app" data-testid="home-page">
@@ -76,46 +86,68 @@ export default function HomePage() {
         onLoginMicrosoft={loginMicrosoft}
       />
 
-      <div className="app-body">
-        <SideRail active="play" onNavigate={navigate} version={version} />
+      <div className={`app-body${activeSection === 'play' ? '' : ' app-body--workspace'}`}>
+        <SideRail active={activeSection} onNavigate={navigate} version={version} />
 
-        <main className="main scroll-thin">
-          <HeroPanel
-            username={active?.username}
-            accountType={active?.type}
-            instance={instance}
-            instances={instances}
-            session={session}
-            onSelectInstance={select}
-            onCreateDefault={createDefault}
-            creating={creating}
-            onRequireAccount={() => setAccountOpen(true)}
-          />
-
-          <InstanceShelf
-            instances={instances}
-            activeId={instance?.id ?? null}
-            onSelect={select}
-            onCreate={createDefault}
-          />
-
-          <div className="main-bottom">
-            <NewsSection items={NEWS} onOpen={openExternal} />
-            <FriendsPanel
-              friends={FRIENDS}
-              onViewMore={() => onError('Friends is presentation-only: the launcher core has no social service')}
+        {activeSection === 'play' ? (
+          <main className="main scroll-thin">
+            <HeroPanel
+              username={active?.username}
+              accountType={active?.type}
+              instance={instance}
+              instances={instances}
+              session={session}
+              onSelectInstance={select}
+              onCreateDefault={createDefault}
+              creating={creating}
+              onRequireAccount={() => setAccountOpen(true)}
             />
-          </div>
-        </main>
 
-        <RightRail
-          discord={DISCORD_INVITE}
-          webstore={WEBSTORE}
-          servers={PARTNERED_SERVERS}
-          statuses={serverStatuses}
-          onOpenExternal={openExternal}
-          onJoinServer={joinServer}
-        />
+            <InstanceShelf
+              instances={instances}
+              activeId={instance?.id ?? null}
+              onSelect={select}
+              onCreate={createDefault}
+            />
+
+            <div className="main-bottom">
+              <NewsSection items={NEWS} onOpen={openExternal} />
+            </div>
+          </main>
+        ) : null}
+
+        {activeSection === 'instances' ? (
+          <InstancesPage
+            instances={instances}
+            instance={instance}
+            session={session}
+            onSelect={select}
+            onRefresh={refresh}
+            onError={onError}
+            onOpenContent={() => setActiveSection('content')}
+          />
+        ) : null}
+
+        {activeSection === 'content' ? (
+          <ContentPage
+            instances={instances}
+            instance={instance}
+            onSelect={select}
+            onRefreshInstances={refresh}
+            onError={onError}
+          />
+        ) : null}
+
+        {activeSection === 'play' ? (
+          <RightRail
+            discord={DISCORD_INVITE}
+            webstore={WEBSTORE}
+            servers={PARTNERED_SERVERS}
+            statuses={serverStatuses}
+            onOpenExternal={openExternal}
+            onJoinServer={joinServer}
+          />
+        ) : null}
       </div>
 
       {notice ? (

@@ -120,7 +120,7 @@ img {
   outline-offset: 2px;
 }
 
-/* Section labels: "NEWS", "FRIENDS", "PARTNERED SERVERS". */
+/* Compact uppercase section labels shared by home and library panels. */
 .eyebrow {
   margin: 0;
   color: var(--text);
@@ -137,7 +137,7 @@ img {
   letter-spacing: 0.22em;
 }
 
-/* Presence / status indicator shared by friend rows and server rows. */
+/* Presence / status indicator used by server and live-session rows. */
 .dot {
   flex: none;
   width: 6px;

@@ -37,6 +37,7 @@ function registerElectronIpc({ ipcMain, backend, validateSender, eventSink = nul
   handle('instances:update', ({ id, patch }) => backend.instances.update(id, patch));
   handle('instances:duplicate', ({ id, name }) => backend.instances.duplicate(id, name));
   handle('instances:delete', ({ id, permanent }) => backend.instances.delete(id, { permanent }));
+  handle('instances:deleted', () => backend.instances.deleted());
   handle('instances:restore', ({ id }) => backend.instances.restore(id));
   handle('instances:files', ({ id, path }) => backend.instances.listFiles(id, path));
   handle('instances:worlds', ({ id }) => backend.instances.worlds(id));
@@ -80,7 +81,7 @@ function registerElectronIpc({ ipcMain, backend, validateSender, eventSink = nul
 
   const forwardedEvents = [
     'auth:progress', 'auth:changed', 'settings:changed', 'download:progress',
-    'instance:created', 'instance:updated', 'instance:deleted', 'instance:operation',
+    'instance:created', 'instance:updated', 'instance:deleted', 'instance:restored', 'instance:operation',
     'content:install', 'content:removed', 'modpack:progress', 'backup:created',
     'game:install', 'game:state', 'game:progress', 'game:log', 'java:install', 'loader:install',
   ];

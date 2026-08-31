@@ -13,7 +13,7 @@
 const path = require('node:path');
 const fsp = require('node:fs/promises');
 const { pathToFileURL } = require('node:url');
-const { app, BrowserWindow, ipcMain, net, protocol, session, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, net, protocol, session, shell } = require('electron');
 const { createLauncherBackend } = require('../backend');
 const { registerElectronIpc } = require('../backend/adapters/electron-ipc');
 const { serializeError } = require('../backend/core/errors');
@@ -71,7 +71,7 @@ const isAllowedLink = (url) => isAllowedExternalUrl(url, EXTERNAL_LINK_HOSTS);
  * Registers the window-chrome and link channels the backend adapter does not
  * own, using the same validated `{ ok, value | error }` envelope.
  */
-function registerHostIpc(updater) {
+function registerHostIpc(updater, backend) {
   const channels = [];
   const handle = (channel, operation) => {
     ipcMain.handle(channel, async (event, payload = {}) => {
@@ -112,6 +112,32 @@ function registerHostIpc(updater) {
       });
     }
     await shell.openExternal(url);
+    return true;
+  });
+  handle('app:pickContentFile', async ({ folder }, event) => {
+    const filters = {
+      mods: [{ name: 'Minecraft mods', extensions: ['jar', 'zip'] }],
+      resourcepacks: [{ name: 'Resource packs', extensions: ['zip'] }],
+      shaderpacks: [{ name: 'Shader packs', extensions: ['zip'] }],
+      datapacks: [{ name: 'Data packs', extensions: ['zip'] }],
+    };
+    if (!filters[folder]) throw Object.assign(new Error('Unsupported content folder'), { code: 'VALIDATION_ERROR' });
+    const result = await dialog.showOpenDialog(windowFor(event), {
+      title: 'Import local content', properties: ['openFile'], filters: filters[folder],
+    });
+    return result.canceled ? null : result.filePaths[0] || null;
+  });
+  handle('app:pickModpackFile', async (_payload, event) => {
+    const result = await dialog.showOpenDialog(windowFor(event), {
+      title: 'Import a modpack', properties: ['openFile'],
+      filters: [{ name: 'Minecraft modpacks', extensions: ['mrpack', 'zip'] }],
+    });
+    return result.canceled ? null : result.filePaths[0] || null;
+  });
+  handle('instances:openFolder', async ({ id }) => {
+    backend.instances.get(id);
+    const error = await shell.openPath(backend.paths.instance(id));
+    if (error) throw new Error(error);
     return true;
   });
   handle('updater:getState', () => updater.getState());
@@ -249,7 +275,7 @@ if (!app.requestSingleInstanceLock()) {
       validateSender,
       eventSink: sendRendererEvent,
     });
-    disposeHostIpc = registerHostIpc(updaterController);
+    disposeHostIpc = registerHostIpc(updaterController, launcher);
 
     mainWindow = createWindow();
     // The controller retains state if the check finishes before the renderer
@@ -279,4 +305,3 @@ if (!app.requestSingleInstanceLock()) {
     })();
   });
 }
-

@@ -1,10 +1,6 @@
 /**
- * Static home-page content.
- *
- * The launcher core deliberately ships no news feed and no social/friends
- * service (see docs/ADVANCED_BACKEND_GUIDE.md — "no telemetry or cloud
- * transport is present"), so these two lists are presentation data. Swap them
- * for a real source by replacing the exports; the components take them as props.
+ * Static home-page content. The launcher core deliberately ships no news feed,
+ * so the cards remain presentation data supplied by the renderer.
  */
 
 /**
@@ -42,17 +38,6 @@ export const NEWS = [
     tone: 'verdant',
     image: null,
   },
-];
-
-/**
- * Friends list placeholder. `presence` is one of 'online' | 'idle' | 'offline'
- * and drives the indicator colour.
- */
-export const FRIENDS = [
-  { id: 'whoap', name: 'whoap', status: 'In Launcher', presence: 'idle' },
-  { id: 'ender0809', name: 'Ender0809', status: 'Playing 1.21.11', presence: 'online' },
-  { id: 'shiro', name: 'Shiro_Kaze', status: 'Playing 1.21.11', presence: 'online' },
-  { id: 'nova', name: 'NovaDrift', status: 'Offline', presence: 'offline' },
 ];
 
 /**

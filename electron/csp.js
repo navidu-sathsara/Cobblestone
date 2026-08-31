@@ -13,7 +13,11 @@
  * renders come from mc-heads.net; partnered-server icons fall back to
  * api.mcsrvstat.us when a server's status ping returns no favicon.
  */
-const REMOTE_IMAGE_ORIGINS = ['https://mc-heads.net', 'https://api.mcsrvstat.us'];
+const REMOTE_IMAGE_ORIGINS = [
+  'https://mc-heads.net',
+  'https://api.mcsrvstat.us',
+  'https://cdn.modrinth.com',
+];
 
 /** External sites the renderer may ask the main process to open in the browser. */
 const EXTERNAL_LINK_HOSTS = ['discord.gg', 'discord.com', 'cobblestone.net', 'modrinth.com'];

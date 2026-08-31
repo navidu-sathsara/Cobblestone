@@ -45,6 +45,10 @@ class ModService {
   async install(instanceId, request, context = {}) {
     const instance = this.instances.get(instanceId);
     const provider = this.providers.get(request.provider || this.settings.get().mods.preferredProvider);
+    const project = await provider.project(request.projectId);
+    if (project.projectType === 'modpack') {
+      throw new ValidationError('Use the modpack service to install modpacks');
+    }
     const visited = context.visited || new Set();
     const visitKey = `${provider.id}:${request.projectId}`;
     if (visited.has(visitKey)) return this.list(instanceId).find((item) => item.key === visitKey) || null;
@@ -60,7 +64,9 @@ class ModService {
       } else {
         const versions = await provider.versions(request.projectId, {
           minecraftVersion: instance.minecraftVersion,
-          loader: instance.loader,
+          // Resource packs, shaders and data packs are not loader-bound. A
+          // Fabric/Forge facet here can hide otherwise compatible releases.
+          loader: project.projectType === 'mod' ? instance.loader : undefined,
           channels,
         });
         version = versions[0];
@@ -76,10 +82,6 @@ class ModService {
         }
       }
 
-      const project = await provider.project(request.projectId);
-      if (project.projectType === 'modpack') {
-        throw new ValidationError('Use the modpack service to install modpacks');
-      }
       const file = await provider.selectFile(version);
       const folder = request.folder || FOLDER_BY_TYPE[project.projectType] || 'mods';
       this.instances.assertContentFolder(folder);
@@ -188,7 +190,9 @@ class ModService {
       }
       try {
         const versions = await this.providers.get(entry.provider).versions(entry.projectId, {
-          minecraftVersion: instance.minecraftVersion, loader: instance.loader, channels,
+          minecraftVersion: instance.minecraftVersion,
+          loader: entry.folder === 'mods' ? instance.loader : undefined,
+          channels,
         });
         const latest = versions[0];
         results.push({ entry, available: Boolean(latest && latest.versionId !== entry.versionId), latest: latest || null });

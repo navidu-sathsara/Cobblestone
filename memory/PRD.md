@@ -14,12 +14,26 @@ Hard constraints from the user: never run/start/build the app (no npm/pnpm run, 
   providers (modrinth, curseforge), mods, modpacks (.mrpack/CF), backups, game supervisor,
   servers ping, diagnostics, cli.js. Contract: docs/ADVANCED_BACKEND_GUIDE.md.
 - electron/ — hardened host: app://launcher protocol, sandbox + contextIsolation, CSP in csp.js
-  (img-src: mc-heads.net, api.mcsrvstat.us; font-src 'self' → no remote webfonts),
+  (img-src: mc-heads.net, api.mcsrvstat.us, cdn.modrinth.com; font-src 'self' → no remote webfonts),
   guards.js, narrow preload bridge.
 - frontend/ — React 19 + Vite renderer, home page only; mock-bridge.js for plain-browser dev.
 - test/ — 5 Node test-runner files. Packaging (electron-builder/auto-update) not configured.
 
 ## Done
+- 2026-08-31: v4.1.0 instance and content system:
+  - Removed the presentation-only Friends panel and added functional Instances
+    and Content routes to the primary navigation.
+  - Added custom Minecraft/loader instance creation, rename, duplicate, repair,
+    recoverable trash/restore, folder access, worlds, latest logs, and full
+    backup create/restore tools.
+  - Added compatible Modrinth discovery for mods, modpacks, resource packs,
+    shaders, and data packs with project artwork and instance targeting.
+  - Added dependency-aware installs, modpack-to-instance installs, local file
+    and archive imports, installed-content filters, enable/disable, pinning,
+    removal, update checks/update-all, and integrity verification.
+  - Expanded only the narrow preload methods needed by these workflows; file
+    paths come from native user-approved pickers and Modrinth artwork is the
+    only new CSP image origin.
 - 2026-08-31: v4.0.7 in-launcher updater modal:
   - Replaced the titlebar-anchored updater popover with a centered modal contained
     inside the launcher window. The titlebar progress chip remains available.
@@ -68,6 +82,5 @@ Hard constraints from the user: never run/start/build the app (no npm/pnpm run, 
 
 ## Backlog
 - P0: visual/functional verification in the desktop shell (user runs it).
-- P1: Profiles/instance manager, Content (Modrinth/CurseForge) browser, Settings pages —
-  the rail links currently show a "not part of the home page yet" notice.
+- P1: Settings page and deeper per-instance JVM/resolution editors.
 - P2: real news feed source, real friends/social source, electron-builder packaging.

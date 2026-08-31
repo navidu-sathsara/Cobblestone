@@ -9,12 +9,17 @@ class ModrinthProvider {
     this.base = 'https://api.modrinth.com/v2';
   }
 
-  async search({ query = '', minecraftVersion, loader, projectType = 'mod', offset = 0, limit = 20 } = {}) {
+  async search({
+    query = '', minecraftVersion, loader, projectType = 'mod',
+    index = 'relevance', offset = 0, limit = 20,
+  } = {}) {
     const facets = [[`project_type:${projectType}`]];
     if (minecraftVersion) facets.push([`versions:${minecraftVersion}`]);
     if (loader && loader !== 'vanilla') facets.push([`categories:${loader}`]);
     const parameters = new URLSearchParams({
-      query, offset: String(offset), limit: String(Math.min(100, limit)), facets: JSON.stringify(facets),
+      query,
+      index: ['relevance', 'downloads', 'follows', 'newest', 'updated'].includes(index) ? index : 'relevance',
+      offset: String(offset), limit: String(Math.min(100, limit)), facets: JSON.stringify(facets),
     });
     const response = await this.http.json(`${this.base}/search?${parameters}`);
     return {

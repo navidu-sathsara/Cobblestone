@@ -122,7 +122,7 @@ export function useLaunchTarget(onError) {
 
   useEffect(() => {
     refresh();
-    const unsubscribes = ['instance:created', 'instance:updated', 'instance:deleted']
+    const unsubscribes = ['instance:created', 'instance:updated', 'instance:deleted', 'instance:restored']
       .map((name) => subscribe(name, refresh));
     return () => { for (const off of unsubscribes) off(); };
   }, [refresh]);
@@ -159,7 +159,7 @@ export function useLaunchTarget(onError) {
     }
   }, [onError]);
 
-  return { instance, instances, select: setSelectedId, createDefault, creating };
+  return { instance, instances, select: setSelectedId, refresh, createDefault, creating };
 }
 
 const BUSY_STATUSES = new Set(['preparing', 'installing', 'launching', 'stopping']);

@@ -30,8 +30,10 @@ test('instances support create, update, duplicate, trash, and restore', async (t
   assert.equal(await fsp.readFile(path.join(paths.instance(duplicate.id), 'options.txt'), 'utf8'), 'fov:0.5');
   await service.delete(created.id);
   assert.equal(service.list().some((item) => item.id === created.id), false);
+  assert.equal(service.deleted()[0].instance.id, created.id);
   await service.restore(created.id);
   assert.equal(service.get(created.id).name, 'Test');
+  assert.equal(service.deleted().length, 0);
 });
 
 test('instance operation locks reject overlapping mutations', async (t) => {
