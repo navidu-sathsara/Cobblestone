@@ -20,6 +20,10 @@ Hard constraints from the user: never run/start/build the app (no npm/pnpm run, 
 - test/ — 5 Node test-runner files. Packaging (electron-builder/auto-update) not configured.
 
 ## Done
+- 2026-08-31: v4.0.7 in-launcher updater modal:
+  - Replaced the titlebar-anchored updater popover with a centered modal contained
+    inside the launcher window. The titlebar progress chip remains available.
+  - The updater uses renderer IPC only and does not create Windows/system notifications.
 - 2026-08-31: v4.0.6 updater feedback and hero scene:
   - Added a main-process updater controller with serializable checking, available,
     download-progress, downloaded, error, and installing states.

@@ -226,49 +226,58 @@ function UpdateControl({ updater }) {
       </button>
 
       {open ? (
-        <section className="update-popover" role="dialog" aria-label="Application update" ref={panel}>
-          <header className="update-popover-head">
-            <span className={`update-popover-icon${failed ? ' update-popover-icon--error' : ''}`}>
-              {failed ? <CircleAlert size={17} /> : complete ? <RotateCcw size={17} /> : <Download size={17} />}
-            </span>
-            <span>
-              <strong>{UPDATE_LABELS[updater.status]}</strong>
-              {updater.version ? <small>Cobblestone {updater.version}</small> : null}
-            </span>
-            <button type="button" className="update-popover-close" aria-label="Close update status" onClick={close}>
-              <X size={14} />
-            </button>
-          </header>
-
-          <p className={failed ? 'update-message update-message--error' : 'update-message'}>
-            {updater.message || 'Preparing the latest Cobblestone update.'}
-          </p>
-
-          {downloading ? (
-            <div className="update-progress-wrap">
-              <span className="update-progress-track">
-                <span className="update-progress-value" style={{ width: `${Math.max(percent, 2)}%` }} />
+        <div className="update-modal-backdrop" data-testid="update-modal">
+          <section
+            className="update-popover"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="update-modal-title"
+            ref={panel}
+          >
+            <header className="update-popover-head">
+              <span className={`update-popover-icon${failed ? ' update-popover-icon--error' : ''}`}>
+                {failed ? <CircleAlert size={17} /> : complete ? <RotateCcw size={17} /> : <Download size={17} />}
               </span>
-              <span className="update-progress-meta">
-                <strong>{updater.status === 'available' ? 'Starting…' : `${percent}%`}</strong>
-                {transferred && total ? <small>{transferred} of {total}</small> : null}
+              <span>
+                <small>Launcher update</small>
+                <strong id="update-modal-title">{UPDATE_LABELS[updater.status]}</strong>
+                {updater.version ? <small>Cobblestone {updater.version}</small> : null}
               </span>
-            </div>
-          ) : null}
+              <button type="button" className="update-popover-close" aria-label="Close update status" onClick={close}>
+                <X size={14} />
+              </button>
+            </header>
 
-          {complete ? (
-            <button type="button" className="update-action" data-testid="update-install" onClick={() => updater.install()}>
-              <RotateCcw size={14} />
-              Restart &amp; install
-            </button>
-          ) : null}
-          {failed ? (
-            <button type="button" className="update-action update-action--secondary" onClick={() => updater.check()}>
-              <RefreshCw size={14} />
-              Try again
-            </button>
-          ) : null}
-        </section>
+            <p className={failed ? 'update-message update-message--error' : 'update-message'}>
+              {updater.message || 'Preparing the latest Cobblestone update.'}
+            </p>
+
+            {downloading ? (
+              <div className="update-progress-wrap">
+                <span className="update-progress-track">
+                  <span className="update-progress-value" style={{ width: `${Math.max(percent, 2)}%` }} />
+                </span>
+                <span className="update-progress-meta">
+                  <strong>{updater.status === 'available' ? 'Starting…' : `${percent}%`}</strong>
+                  {transferred && total ? <small>{transferred} of {total}</small> : null}
+                </span>
+              </div>
+            ) : null}
+
+            {complete ? (
+              <button type="button" className="update-action" data-testid="update-install" onClick={() => updater.install()}>
+                <RotateCcw size={14} />
+                Restart &amp; install
+              </button>
+            ) : null}
+            {failed ? (
+              <button type="button" className="update-action update-action--secondary" onClick={() => updater.check()}>
+                <RefreshCw size={14} />
+                Try again
+              </button>
+            ) : null}
+          </section>
+        </div>
       ) : null}
     </div>
   );

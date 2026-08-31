@@ -94,7 +94,7 @@ export function createMockBridge() {
 
     status: async () => ({
       name: 'Cobblestone',
-      version: '4.0.6',
+      version: '4.0.7',
       dataDirectory: '~/.cobblestone',
       runningGames: running ? [running] : [],
       downloads: [],

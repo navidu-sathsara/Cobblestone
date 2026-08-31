@@ -141,19 +141,27 @@
   50% { opacity: 0.42; }
 }
 
+.update-modal-backdrop {
+  position: fixed;
+  inset: var(--chrome-h) 0 0;
+  z-index: 75;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 3, 4, 0.7);
+  backdrop-filter: blur(7px);
+  animation: account-fade 160ms ease-out both;
+  -webkit-app-region: no-drag;
+}
+
 .update-popover {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  z-index: 80;
-  width: 300px;
-  padding: 13px;
-  border-radius: 13px;
+  width: min(390px, calc(100vw - 32px));
+  padding: 18px;
+  border-radius: 16px;
   border: 1px solid var(--edge-strong);
-  background: rgba(24, 24, 27, 0.98);
-  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.68);
-  backdrop-filter: blur(18px);
-  animation: rise 180ms var(--ease) both;
+  background: linear-gradient(180deg, #1E1E21, #111113);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.74), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  animation: account-enter 220ms var(--ease) both;
 }
 
 .update-popover-head {
@@ -186,12 +194,21 @@
 }
 
 .update-popover-head strong {
-  font-size: 12px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.025em;
 }
 
 .update-popover-head small {
   color: var(--text-muted);
   font-size: 9.5px;
+}
+
+.update-popover-head small:first-child {
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .update-popover-close {
@@ -209,10 +226,10 @@
 }
 
 .update-message {
-  margin: 11px 1px 0;
+  margin: 15px 1px 0;
   color: var(--text-dim);
-  font-size: 10.5px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .update-message--error {
@@ -220,12 +237,12 @@
 }
 
 .update-progress-wrap {
-  margin-top: 12px;
+  margin-top: 15px;
 }
 
 .update-progress-track {
   display: block;
-  height: 5px;
+  height: 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
@@ -243,7 +260,7 @@
 .update-progress-meta {
   display: flex;
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: 8px;
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 9px;
@@ -260,12 +277,12 @@
   justify-content: center;
   gap: 7px;
   width: 100%;
-  height: 36px;
-  margin-top: 13px;
+  height: 40px;
+  margin-top: 16px;
   border-radius: 9px;
   background: linear-gradient(180deg, var(--copper-300), var(--copper-600));
   color: var(--ink-000);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 750;
 }
 
