@@ -2,7 +2,7 @@ packages:
   - frontend
 
 allowBuilds:
-  electron-winstaller: set this to true or false
+  electron-winstaller: true
 
 overrides:
   undici: 7.29.0
