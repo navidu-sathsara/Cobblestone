@@ -40,8 +40,8 @@
   width: 176px;
   padding: 11px 13px 12px;
   border-radius: var(--r-md);
-  background: linear-gradient(180deg, var(--ink-100), var(--ink-050));
-  border: 1px solid var(--edge);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
   text-align: left;
   transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease);
   animation: rise 380ms var(--ease) both;
@@ -49,14 +49,14 @@
 
 .instance-card:hover {
   transform: translateY(-2px);
-  border-color: var(--edge-strong);
-  background: linear-gradient(180deg, var(--ink-150), var(--ink-100));
+  border-color: var(--line-strong);
+  background: var(--surface-2);
 }
 
 .instance-card--active {
-  border-color: rgba(214, 214, 218, 0.45);
-  background: linear-gradient(180deg, rgba(214, 214, 218, 0.14), var(--ink-100));
-  box-shadow: 0 10px 26px rgba(167, 167, 173, 0.16);
+  border-color: var(--text-2);
+  background: var(--surface-2);
+  box-shadow: var(--sh-1);
 }
 
 .instance-state {
@@ -115,7 +115,7 @@
 .instance-card--new {
   justify-content: center;
   border-style: dashed;
-  border-color: var(--edge-strong);
+  border-color: var(--line-strong);
   background: rgba(255, 255, 255, 0.015);
   color: var(--text-dim);
 }

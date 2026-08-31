@@ -50,7 +50,7 @@
   width: 3px;
   height: 0;
   border-radius: 0 3px 3px 0;
-  background: linear-gradient(180deg, var(--accent-bright), var(--accent-deep));
+  background: var(--text);
   transform: translateY(-50%);
   transition: height 220ms var(--ease);
 }
@@ -84,10 +84,10 @@
 }
 
 .rail-item--active .rail-glyph {
-  background: var(--accent-soft);
-  border-color: var(--accent-glow);
-  color: var(--accent-bright);
-  box-shadow: 0 4px 16px var(--accent-glow);
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--text);
+  box-shadow: var(--sh-1);
 }
 
 .rail-label {

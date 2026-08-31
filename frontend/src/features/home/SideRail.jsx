@@ -1,23 +1,16 @@
-import { Handshake, LayoutGrid, Play, Settings, ShoppingCart, Sparkles } from 'lucide-react';
 import './SideRail.css';
 
-/**
- * Primary navigation. Play, Instances, Content, Partners and Settings are real
- * routed screens; Store is an external link the shell opens through its trusted
- * URL policy.
- */
 const NAV = [
-  { id: 'play', label: 'Play', Icon: Play },
-  { id: 'instances', label: 'Instances', Icon: LayoutGrid },
-  { id: 'content', label: 'Content', Icon: Sparkles },
-  { id: 'partners', label: 'Partners', Icon: Handshake },
-  { id: 'store', label: 'Store', Icon: ShoppingCart, external: true },
+  { id: 'play', label: 'Play', iconSrc: '/play_icon.jpg' },
+  { id: 'instances', label: 'Instances', iconSrc: '/instances_icon.jpg' },
+  { id: 'content', label: 'Content', iconSrc: '/content_icon.jpg' },
+  { id: 'store', label: 'Store', iconSrc: '/store_icon.jpg', external: true },
 ];
 
-const FOOT = [{ id: 'settings', label: 'Settings', Icon: Settings }];
+const FOOT = [{ id: 'settings', label: 'Settings', iconSrc: '/settings_icon.jpg' }];
 
 export default function SideRail({ active = 'play', onNavigate = () => {}, version }) {
-  const item = ({ id, label, Icon, external }) => {
+  const item = ({ id, label, iconSrc, external }) => {
     const current = id === active;
     return (
       <li key={id}>
@@ -29,7 +22,7 @@ export default function SideRail({ active = 'play', onNavigate = () => {}, versi
           onClick={() => onNavigate(id)}
         >
           <span className="rail-glyph">
-            <Icon size={18} strokeWidth={2.2} />
+            <img src={iconSrc} alt="" style={{ width: 18, height: 18 }} />
           </span>
           <span className="rail-label">{label}</span>
           {external ? <span className="rail-external" aria-hidden="true" /> : null}
