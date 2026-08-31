@@ -17,9 +17,9 @@
     "check": "node scripts/check.js",
     "test": "node --test --test-reporter=spec",
     "test:coverage": "node --test --experimental-test-coverage",
-    "frontend:dev": "pnpm --filter cobblestone-frontend dev",
-    "frontend:build": "pnpm --filter cobblestone-frontend build",
-    "desktop": "pnpm run frontend:build && electron electron/main.js",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "desktop": "npm run frontend:build && electron --no-sandbox electron/main.js",
     "desktop:dev": "node scripts/dev-desktop.js"
   },
   "keywords": [

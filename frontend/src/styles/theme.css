@@ -1,43 +1,64 @@
-/* Design tokens for the launcher shell. Every surface colour used by the home
-   page resolves to one of these so the whole window can be retoned in one file. */
+/* Design tokens for the launcher shell.
+   Palette: deepslate greys lit by copper, with amethyst and lime as the only
+   secondary hues. Every surface colour on the home page resolves to a token
+   here so the whole window can be retoned from this file. */
 :root {
-  --shell-bg: #0f1217;
-  --chrome-bg: #0b0d11;
-  --rail-bg: #07080a;
-  --panel-bg: #14181f;
-  --panel-bg-hover: #1a1f28;
-  --panel-raised: #1e242e;
+  /* Surfaces, darkest chrome to most raised panel. */
+  --ink-000: #06080b;
+  --ink-050: #0a0d12;
+  --ink-100: #10141c;
+  --ink-150: #151b25;
+  --ink-200: #1c2432;
+  --ink-250: #242e3e;
 
-  --line: rgba(255, 255, 255, 0.06);
-  --line-strong: rgba(255, 255, 255, 0.11);
+  --edge: rgba(255, 255, 255, 0.055);
+  --edge-strong: rgba(255, 255, 255, 0.12);
+  --edge-bright: rgba(255, 255, 255, 0.22);
 
-  --text: #ffffff;
-  --text-dim: #9aa4b2;
-  --text-muted: #6b7280;
-  --text-faint: #4b5563;
+  --text: #f2f5f8;
+  --text-dim: #98a3b3;
+  --text-muted: #6a7484;
+  --text-faint: #48505d;
 
-  --accent-from: #f7b055;
-  --accent-mid: #ef9333;
-  --accent-to: #df7c1b;
+  /* Copper: the single primary action colour. */
+  --copper-200: #ffd6a3;
+  --copper-300: #ffbc74;
+  --copper-500: #ef8f34;
+  --copper-600: #de761d;
+  --copper-700: #b45412;
+  --copper-glow: rgba(239, 143, 52, 0.32);
 
-  --online: #3ddc70;
+  --amethyst: #8f6cf5;
+  --amethyst-deep: #4b2f9c;
+  --lime: #8fe36a;
+  --rust: #e0503f;
+
+  --online: var(--lime);
   --idle: #f2c33c;
   --offline: #4b5563;
 
-  --discord-from: #4149c8;
-  --discord-to: #232a6d;
-  --discord-pill: #5b64e8;
-  --store-from: #3bb45c;
-  --store-to: #166b30;
+  --discord-from: #5865f2;
+  --discord-to: #2b2f7a;
+  --store-from: #3fbf6a;
+  --store-to: #14663a;
 
-  --radius-card: 10px;
-  --radius-row: 8px;
+  --r-lg: 16px;
+  --r-md: 11px;
+  --r-sm: 8px;
 
-  --rail-w: 70px;
-  --aside-w: 246px;
-  --chrome-h: 52px;
+  --rail-w: 84px;
+  --aside-w: 268px;
+  --chrome-h: 46px;
 
-  --font: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+  /* Condensed industrial display face for headings and the wordmark; the text
+     face stays a neutral UI stack. Both are system-resident: the renderer CSP
+     allows no remote font origin. */
+  --font-display: "Bahnschrift SemiBold", Bahnschrift, "DIN Alternate", "DIN Condensed",
+    "Haettenschweiler", "Arial Narrow", "Roboto Condensed", "Segoe UI Semibold", sans-serif;
+  --font: "Segoe UI Variable Text", "Segoe UI", "Avenir Next", Ubuntu, "Noto Sans", sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  --ease: cubic-bezier(0.22, 0.68, 0.24, 1);
 }
 
 *,
@@ -54,7 +75,7 @@ body,
 }
 
 body {
-  background: var(--shell-bg);
+  background: var(--ink-050);
   color: var(--text);
   font-family: var(--font);
   font-size: 13px;
@@ -80,13 +101,22 @@ button:disabled {
   cursor: default;
 }
 
+input {
+  font: inherit;
+}
+
 img {
   display: block;
   -webkit-user-drag: none;
 }
 
+::selection {
+  background: var(--copper-500);
+  color: #17100a;
+}
+
 :focus-visible {
-  outline: 2px solid var(--accent-mid);
+  outline: 2px solid var(--copper-300);
   outline-offset: 2px;
 }
 
@@ -94,17 +124,17 @@ img {
 .eyebrow {
   margin: 0;
   color: var(--text);
-  font-size: 11px;
+  font-family: var(--font-display);
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .eyebrow--muted {
   color: var(--text-muted);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-size: 10px;
+  letter-spacing: 0.22em;
 }
 
 /* Presence / status indicator shared by friend rows and server rows. */
@@ -118,12 +148,41 @@ img {
 
 .dot--online {
   background: var(--online);
-  box-shadow: 0 0 6px rgba(61, 220, 112, 0.5);
+  box-shadow: 0 0 7px rgba(143, 227, 106, 0.55);
 }
 
 .dot--idle {
   background: var(--idle);
-  box-shadow: 0 0 6px rgba(242, 195, 60, 0.45);
+  box-shadow: 0 0 7px rgba(242, 195, 60, 0.45);
+}
+
+/* Small uppercase metadata pill used on the hero and instance cards. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(10, 13, 18, 0.55);
+  border: 1px solid var(--edge-strong);
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  backdrop-filter: blur(14px);
+}
+
+.chip--accent {
+  border-color: rgba(239, 143, 52, 0.45);
+  color: var(--copper-200);
+}
+
+.chip--warn {
+  border-color: rgba(224, 80, 63, 0.45);
+  color: #ffb3a8;
 }
 
 .scroll-thin {
@@ -133,6 +192,7 @@ img {
 
 .scroll-thin::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 .scroll-thin::-webkit-scrollbar-thumb {
@@ -153,6 +213,22 @@ img {
 .scroll-hidden::-webkit-scrollbar {
   width: 0;
   height: 0;
+}
+
+/* Staggered entrance used by the rail, hero and panels on first paint. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 420ms var(--ease) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

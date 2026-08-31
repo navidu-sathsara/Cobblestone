@@ -1,8 +1,16 @@
 const COUNT_FORMAT = new Intl.NumberFormat('en-US');
 
-/** 35000 -> "35,000". Matches the partnered-server counts in the design. */
+/** 35000 -> "35,000". Used for partnered-server player counts. */
 export function formatCount(value) {
   return typeof value === 'number' && Number.isFinite(value) ? COUNT_FORMAT.format(value) : '—';
+}
+
+/** 35000 -> "35K", for the tight hero/shelf metadata. */
+export function formatCompact(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  if (value < 1000) return String(value);
+  if (value < 1_000_000) return `${(value / 1000).toFixed(value < 10_000 ? 1 : 0).replace('.0', '')}K`;
+  return `${(value / 1_000_000).toFixed(1).replace('.0', '')}M`;
 }
 
 const LOADER_LABELS = {
@@ -17,14 +25,56 @@ export function formatLoader(loader) {
   return LOADER_LABELS[loader] || 'Vanilla';
 }
 
-/**
- * The launch button subtitle, e.g. "Cobblestone + Fabric 1.21.11". Vanilla
- * instances drop the loader name entirely.
- */
-export function formatLaunchTarget(instance) {
+/** "Fabric 1.21.11" — the loader/version pair shown on cards and menus. */
+export function formatBuild(instance) {
   if (!instance) return 'No instance yet';
-  const loader = instance.loader === 'vanilla' ? '' : `${formatLoader(instance.loader)} `;
-  return `Cobblestone + ${loader}${instance.minecraftVersion}`;
+  return `${formatLoader(instance.loader)} ${instance.minecraftVersion}`;
+}
+
+/** InstanceService installState -> a short human label. */
+export function formatInstallState(state) {
+  if (state === 'ready') return 'Installed';
+  if (state === 'installing') return 'Installing';
+  if (state === 'broken') return 'Needs repair';
+  return 'Not installed';
+}
+
+/** 18420 -> "5h 7m". Play time comes from the backend in seconds. */
+export function formatPlaytime(seconds) {
+  if (typeof seconds !== 'number' || seconds <= 0) return 'Never played';
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (!hours) return `${Math.max(minutes, 1)}m played`;
+  return `${hours}h ${minutes}m played`;
+}
+
+const RELATIVE_STEPS = [
+  [60_000, 'just now', null],
+  [3_600_000, null, 60_000],
+  [86_400_000, null, 3_600_000],
+];
+
+/** Epoch millis -> "just now" / "14m ago" / "3h ago" / "5d ago". */
+export function formatRelative(timestamp) {
+  if (!timestamp) return null;
+  const elapsed = Date.now() - timestamp;
+  if (elapsed < 0) return 'just now';
+  for (const [limit, label, unit] of RELATIVE_STEPS) {
+    if (elapsed >= limit) continue;
+    if (label) return label;
+    const value = Math.floor(elapsed / unit);
+    return `${value}${unit === 60_000 ? 'm' : 'h'} ago`;
+  }
+  return `${Math.floor(elapsed / 86_400_000)}d ago`;
+}
+
+/** Time-of-day greeting for the hero eyebrow. */
+export function greeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour < 5) return 'Still awake';
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 /** mc-heads.net renders a player body from a name or UUID. */
