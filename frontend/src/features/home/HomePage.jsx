@@ -11,7 +11,6 @@ import HeroPanel from './HeroPanel.jsx';
 import InstanceShelf from './InstanceShelf.jsx';
 import InstancesPage from './InstancesPage.jsx';
 import NewsSection from './NewsSection.jsx';
-import PartnersPage from '../partners/PartnersPage.jsx';
 import RightRail from './RightRail.jsx';
 import SettingsPage from '../settings/SettingsPage.jsx';
 import SideRail from './SideRail.jsx';
@@ -133,19 +132,6 @@ export default function HomePage() {
           />
         ) : null}
 
-        {route === 'partners' ? (
-          <PartnersPage
-            servers={PARTNERED_SERVERS}
-            statuses={statuses}
-            discord={DISCORD_INVITE}
-            webstore={WEBSTORE}
-            instance={instance}
-            session={session}
-            onRefresh={refreshServers}
-            onJoinServer={joinServer}
-            onOpenExternal={openExternal}
-          />
-        ) : null}
 
         {route === 'settings' ? (
           <SettingsPage
