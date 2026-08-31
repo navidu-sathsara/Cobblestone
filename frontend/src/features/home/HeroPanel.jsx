@@ -84,6 +84,8 @@ export default function HeroPanel({
   session,
   onSelectInstance,
   onCreateDefault,
+  creating = false,
+  onRequireAccount,
   heroImage = null,
 }) {
   const [open, setOpen] = useState(false);
@@ -93,13 +95,18 @@ export default function HeroPanel({
 
   const hasInstance = Boolean(instance);
   const busyLabel = BUSY_LABELS[session.status];
-  const label = !hasInstance
-    ? 'Create instance'
-    : session.running
-      ? 'Stop game'
-      : busyLabel
-        ? `${busyLabel}…`
-        : 'Launch game';
+  const needsAccount = hasInstance && !username;
+  const label = creating
+    ? 'Creating…'
+    : !hasInstance
+      ? 'Create instance'
+      : needsAccount
+        ? 'Sign in to launch'
+        : session.running
+          ? 'Stop game'
+          : busyLabel
+            ? `${busyLabel}…`
+            : 'Launch game';
 
   const lastPlayed = formatRelative(instance?.lastPlayedAt);
 
@@ -141,9 +148,13 @@ export default function HeroPanel({
             <button
               type="button"
               className="launch-main"
-              disabled={session.busy}
+              disabled={session.busy || creating}
               data-testid="launch-button"
-              onClick={() => (hasInstance ? session.toggle() : onCreateDefault())}
+              onClick={() => {
+                if (!hasInstance) onCreateDefault();
+                else if (needsAccount) onRequireAccount();
+                else session.toggle();
+              }}
             >
               <span className="launch-glyph">
                 {session.running ? <Square size={13} strokeWidth={3} /> : <Play size={14} strokeWidth={3} />}
@@ -175,7 +186,9 @@ export default function HeroPanel({
           </div>
 
           <span className="hero-status" data-testid="hero-status">
-            {session.detail || (hasInstance ? 'Ready when you are' : 'Create an instance to get started')}
+            {session.detail || (needsAccount
+              ? 'Choose a Microsoft account or offline profile first'
+              : hasInstance ? 'Ready when you are' : 'Create an instance to get started')}
           </span>
 
           {session.busy ? <span className="hero-progress" aria-hidden="true" /> : null}

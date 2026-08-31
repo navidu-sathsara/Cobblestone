@@ -22,11 +22,12 @@ const SECTION_LABELS = {
 
 export default function HomePage() {
   const [notice, setNotice] = useState(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const onError = useCallback((message) => setNotice(message), []);
 
   const version = useBackendVersion();
-  const { accounts, active, setActive, addOffline, loginMicrosoft } = useAccounts(onError);
-  const { instance, instances, select, createDefault } = useLaunchTarget(onError);
+  const { accounts, active, login, setActive, addOffline, loginMicrosoft } = useAccounts(onError);
+  const { instance, instances, select, createDefault, creating } = useLaunchTarget(onError);
   const session = useGameSession(instance?.id ?? null, onError);
   const serverStatuses = useServerStatus(PARTNERED_SERVERS);
 
@@ -63,6 +64,9 @@ export default function HomePage() {
         active={active}
         session={session}
         instance={instance}
+        accountOpen={accountOpen}
+        onAccountOpenChange={setAccountOpen}
+        login={login}
         onSelect={setActive}
         onAddOffline={addOffline}
         onLoginMicrosoft={loginMicrosoft}
@@ -80,6 +84,8 @@ export default function HomePage() {
             session={session}
             onSelectInstance={select}
             onCreateDefault={createDefault}
+            creating={creating}
+            onRequireAccount={() => setAccountOpen(true)}
           />
 
           <InstanceShelf

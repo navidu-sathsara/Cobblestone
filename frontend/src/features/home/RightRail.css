@@ -9,6 +9,44 @@
   overflow-y: auto;
 }
 
+.aside-server-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 2px 5px;
+}
+
+.aside-server-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid var(--edge-strong);
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text-dim);
+}
+
+.aside-server-head > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aside-server-head small {
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.aside-promos {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--edge);
+}
+
 .promo {
   position: relative;
   display: flex;
@@ -99,8 +137,7 @@
 }
 
 .aside-heading {
-  margin-top: 8px;
-  padding-left: 2px;
+  margin: 0;
 }
 
 .server-list {
@@ -129,6 +166,16 @@
 .server-row:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: var(--edge);
+}
+
+.server-row:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.server-row:disabled:hover {
+  background: transparent;
+  border-color: transparent;
 }
 
 /* Thin accent stripe carrying each partner's brand colour. */
@@ -213,18 +260,17 @@
   transition: opacity 160ms var(--ease), transform 160ms var(--ease);
 }
 
-.server-row:hover .server-meta {
+.server-row:not(:disabled):hover .server-meta {
   opacity: 0;
 }
 
-.server-row:hover .server-join {
+.server-row:not(:disabled):hover .server-join {
   opacity: 1;
   transform: translateY(-50%) scale(1);
 }
 
 .aside-foot {
-  margin-top: auto;
-  padding-top: 10px;
+  padding: 2px 4px 8px;
   color: var(--text-faint);
   font-size: 9.5px;
   text-align: center;

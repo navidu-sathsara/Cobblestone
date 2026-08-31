@@ -46,6 +46,7 @@ function ServerIcon({ server, favicon }) {
 
 function ServerRow({ server, status, onJoin, index }) {
   const online = status?.online === true;
+  const unavailable = !online;
   const players = online ? status.players?.online : null;
 
   return (
@@ -53,10 +54,11 @@ function ServerRow({ server, status, onJoin, index }) {
       <button
         type="button"
         className="server-row"
+        disabled={unavailable}
         data-testid={`server-row-${server.id}`}
         style={{ animationDelay: `${index * 45}ms` }}
         onClick={() => onJoin(server.address)}
-        title={online ? `Join ${server.name}` : `${server.name} is unreachable`}
+        title={online ? `Join ${server.name}` : status ? `${server.name} is unreachable` : `Checking ${server.name}`}
       >
         <span className="server-accent" style={{ background: server.accent }} aria-hidden="true" />
         <ServerIcon server={server} favicon={status?.favicon} />
@@ -79,28 +81,13 @@ function ServerRow({ server, status, onJoin, index }) {
 export default function RightRail({ discord, webstore, servers, statuses, onOpenExternal, onJoinServer }) {
   return (
     <aside className="aside scroll-thin" aria-label="Community" data-testid="right-rail">
-      <PromoCard
-        variant="discord"
-        Icon={MessagesSquare}
-        Watermark={MessagesSquare}
-        title="Community"
-        subtitle={discord.label}
-        action="Join"
-        testId="promo-discord"
-        onOpen={() => onOpenExternal(discord.url)}
-      />
-      <PromoCard
-        variant="store"
-        Icon={ShoppingCart}
-        Watermark={Coins}
-        title="Webstore"
-        subtitle={webstore.label}
-        action="Visit"
-        testId="promo-store"
-        onOpen={() => onOpenExternal(webstore.url)}
-      />
-
-      <h2 className="eyebrow eyebrow--muted aside-heading">Partnered Servers</h2>
+      <header className="aside-server-head">
+        <span className="aside-server-mark"><Server size={15} strokeWidth={2.3} /></span>
+        <span>
+          <h2 className="eyebrow eyebrow--muted aside-heading">Partnered Servers</h2>
+          <small>Live network status</small>
+        </span>
+      </header>
 
       <ul className="server-list">
         {servers.map((server, index) => (
@@ -114,7 +101,30 @@ export default function RightRail({ discord, webstore, servers, statuses, onOpen
         ))}
       </ul>
 
-      <span className="aside-foot">Click a server to launch straight into it</span>
+      <span className="aside-foot">Select an online server to quick-connect</span>
+
+      <div className="aside-promos">
+        <PromoCard
+          variant="discord"
+          Icon={MessagesSquare}
+          Watermark={MessagesSquare}
+          title="Community"
+          subtitle={discord.label}
+          action="Join"
+          testId="promo-discord"
+          onOpen={() => onOpenExternal(discord.url)}
+        />
+        <PromoCard
+          variant="store"
+          Icon={ShoppingCart}
+          Watermark={Coins}
+          title="Webstore"
+          subtitle={webstore.label}
+          action="Visit"
+          testId="promo-store"
+          onOpen={() => onOpenExternal(webstore.url)}
+        />
+      </div>
     </aside>
   );
 }

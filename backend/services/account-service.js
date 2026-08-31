@@ -59,7 +59,10 @@ class AccountService {
     manager.on?.('load', (stage, message) => this.events.emit('auth:progress', { stage, message }));
     this.events.emit('auth:progress', { stage: 'browser', message: 'Waiting for Microsoft sign-in' });
     try {
-      const xbox = await manager.launch('raw', { width: 540, height: 760, suppress: true });
+      // msmc's raw flow discovers Chromium's remote-debugging port from the
+      // spawned browser's stderr. Setting `suppress: true` also suppresses that
+      // parser, leaving the OAuth promise pending forever after sign-in.
+      const xbox = await manager.launch('raw', { width: 540, height: 760 });
       const minecraft = await xbox.getMinecraft();
       if (!minecraft.profile?.id || !minecraft.profile?.name) {
         throw new AuthenticationError('This account does not expose a Minecraft Java profile');

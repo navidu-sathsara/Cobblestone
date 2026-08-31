@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { Check, LogIn, Minus, Plus, Square, User, Users } from 'lucide-react';
+import {
+  Check, ChevronDown, LoaderCircle, LogIn, Minus, Plus, ShieldCheck, Square, User, X,
+} from 'lucide-react';
 import { bridge } from '../../lib/bridge.js';
 import { headUrl } from '../../lib/format.js';
 import { useDismiss } from '../../lib/use-dismiss.js';
@@ -48,116 +50,160 @@ function SessionChip({ session, instance }) {
   );
 }
 
-function AccountMenu({ accounts, active, onSelect, onAddOffline, onLoginMicrosoft, close }) {
+function AccountModal({ accounts, active, login, onSelect, onAddOffline, onLoginMicrosoft, close, panelRef }) {
   const [name, setName] = useState('');
+  const [addingOffline, setAddingOffline] = useState(false);
   const valid = OFFLINE_NAME.test(name);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    if (!valid) return;
-    onAddOffline(name);
-    setName('');
-    close();
+    if (!valid || addingOffline || login.busy) return;
+    setAddingOffline(true);
+    const account = await onAddOffline(name);
+    setAddingOffline(false);
+    if (account) {
+      setName('');
+      close();
+    }
   };
 
   return (
-    <div className="account-menu" role="menu" data-testid="account-menu">
-      <span className="account-menu-label">Signed in</span>
-
-      {accounts.length ? accounts.map((account) => (
-        <button
-          type="button"
-          role="menuitemradio"
-          aria-checked={account.id === active?.id}
-          key={account.id}
-          className="account-menu-item"
-          data-testid={`account-option-${account.id}`}
-          onClick={() => { onSelect(account.id); close(); }}
-        >
-          <Avatar name={account.username} size={22} />
-          <span className="account-menu-text">
-            <span className="account-menu-name">{account.username}</span>
-            <span className="account-menu-kind">{account.type === 'microsoft' ? 'Microsoft' : 'Offline'}</span>
-          </span>
-          {account.id === active?.id ? <Check size={14} strokeWidth={2.8} className="account-menu-check" /> : null}
-        </button>
-      )) : <span className="account-menu-empty">No accounts yet</span>}
-
-      <div className="account-menu-divider" />
-
-      <button
-        type="button"
-        role="menuitem"
-        className="account-menu-item account-menu-item--action"
-        data-testid="account-add-microsoft"
-        onClick={() => { onLoginMicrosoft(); close(); }}
+    <div className="account-modal-backdrop" data-testid="account-menu">
+      <section
+        className="account-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="account-modal-title"
+        ref={panelRef}
       >
-        <span className="account-menu-icon"><LogIn size={14} strokeWidth={2.3} /></span>
-        <span className="account-menu-name">Add Microsoft account</span>
-      </button>
+        <header className="account-modal-head">
+          <span className="account-modal-mark"><ShieldCheck size={20} strokeWidth={2.2} /></span>
+          <span className="account-modal-heading">
+            <span className="account-modal-kicker">Cobblestone account</span>
+            <h2 id="account-modal-title">Choose how you play</h2>
+          </span>
+          <button type="button" className="account-modal-close" aria-label="Close accounts" onClick={close}>
+            <X size={17} strokeWidth={2.3} />
+          </button>
+        </header>
 
-      <form className="account-offline" onSubmit={submit}>
-        <input
-          className="account-offline-input"
-          value={name}
-          maxLength={16}
-          spellCheck="false"
-          autoComplete="off"
-          placeholder="Offline username"
-          aria-label="Offline username"
-          data-testid="offline-username-input"
-          onChange={(event) => setName(event.target.value)}
-        />
-        <button
-          type="submit"
-          className="account-offline-add"
-          disabled={!valid}
-          aria-label="Add offline account"
-          data-testid="offline-username-submit"
-        >
-          <Plus size={14} strokeWidth={2.8} />
-        </button>
-      </form>
+        <div className="account-modal-body">
+          {accounts.length ? (
+            <div className="account-profiles">
+              <span className="account-section-label">Saved profiles</span>
+              <div className="account-profile-list">
+                {accounts.map((account) => (
+                  <button
+                    type="button"
+                    aria-pressed={account.id === active?.id}
+                    key={account.id}
+                    className={`account-profile${account.id === active?.id ? ' account-profile--active' : ''}`}
+                    data-testid={`account-option-${account.id}`}
+                    onClick={async () => { if (await onSelect(account.id)) close(); }}
+                  >
+                    <Avatar name={account.username} size={34} />
+                    <span className="account-profile-text">
+                      <span className="account-profile-name">{account.username}</span>
+                      <span className="account-profile-kind">
+                        {account.type === 'microsoft' ? 'Microsoft account' : 'Offline profile'}
+                      </span>
+                    </span>
+                    {account.id === active?.id ? (
+                      <span className="account-profile-check"><Check size={14} strokeWidth={3} /></span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="account-modal-empty">Sign in once and your profile will stay ready for the next launch.</p>
+          )}
+
+          <button
+            type="button"
+            className="microsoft-login"
+            data-testid="account-add-microsoft"
+            disabled={login.busy || addingOffline}
+            onClick={async () => { if (await onLoginMicrosoft()) close(); }}
+          >
+            <span className="microsoft-logo" aria-hidden="true"><i /><i /><i /><i /></span>
+            <span className="microsoft-login-copy">
+              <strong>{active?.type === 'microsoft' ? 'Add another Microsoft account' : 'Sign in with Microsoft'}</strong>
+              <small className={login.stage === 'failed' ? 'account-login-error' : undefined}>
+                {login.busy || login.stage === 'failed'
+                  ? login.message
+                  : 'Use your Minecraft Java profile'}
+              </small>
+            </span>
+            {login.busy ? <LoaderCircle className="account-spinner" size={18} /> : <LogIn size={18} strokeWidth={2.2} />}
+          </button>
+
+          <div className="account-divider"><span>or play offline</span></div>
+
+          <form className="account-offline" onSubmit={submit}>
+            <label htmlFor="offline-username">Offline username</label>
+            <div className="account-offline-row">
+              <input
+                id="offline-username"
+                className="account-offline-input"
+                value={name}
+                maxLength={16}
+                spellCheck="false"
+                autoComplete="off"
+                placeholder="Player name"
+                data-testid="offline-username-input"
+                disabled={login.busy || addingOffline}
+                onChange={(event) => setName(event.target.value)}
+              />
+              <button
+                type="submit"
+                className="account-offline-add"
+                disabled={!valid || login.busy || addingOffline}
+                data-testid="offline-username-submit"
+              >
+                {addingOffline ? <LoaderCircle className="account-spinner" size={15} /> : <Plus size={15} strokeWidth={2.8} />}
+                Add profile
+              </button>
+            </div>
+            <small>Offline profiles cannot join online-mode servers.</small>
+          </form>
+        </div>
+      </section>
     </div>
   );
 }
 
-function AccountPill(props) {
-  const [open, setOpen] = useState(false);
-  const holder = useRef(null);
-  const close = useCallback(() => setOpen(false), []);
-  useDismiss(holder, open, close);
+function AccountControl({ open, onOpenChange, ...props }) {
+  const panel = useRef(null);
+  const close = useCallback(() => onOpenChange(false), [onOpenChange]);
+  useDismiss(panel, open, close);
   const { active, accounts } = props;
 
   return (
-    <div className="account" ref={holder}>
+    <div className="account">
       <button
         type="button"
-        className={`account-pill${open ? ' account-pill--open' : ''}`}
-        aria-haspopup="menu"
+        className={`account-trigger${active ? ' account-trigger--profile' : ' account-trigger--signin'}${open ? ' account-trigger--open' : ''}`}
+        aria-haspopup="dialog"
         aria-expanded={open}
         data-testid="account-pill"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => onOpenChange(!open)}
       >
-        <Avatar name={active?.username} size={20} />
-        <span className="account-text">
-          <span className="account-name">{active?.username || 'Sign in'}</span>
-          <span className="account-kind">
-            {active ? (active.type === 'microsoft' ? 'Microsoft' : 'Offline') : 'No account'}
-          </span>
+        {active ? <Avatar name={active.username} size={23} /> : <LogIn size={15} strokeWidth={2.4} />}
+        <span className="account-trigger-copy">
+          <strong>{active?.username || 'Sign in'}</strong>
+          {active ? <small>{active.type === 'microsoft' ? 'Microsoft' : 'Offline'}</small> : null}
         </span>
-        <span className="account-count">
-          <Users size={12} strokeWidth={2.4} />
-          {accounts.length}
-        </span>
+        {accounts.length > 1 ? <span className="account-trigger-count">{accounts.length}</span> : null}
+        <ChevronDown className={open ? 'account-chevron account-chevron--open' : 'account-chevron'} size={14} />
       </button>
 
-      {open ? <AccountMenu {...props} close={close} /> : null}
+      {open ? <AccountModal {...props} close={close} panelRef={panel} /> : null}
     </div>
   );
 }
 
-export default function TitleBar({ session, instance, ...account }) {
+export default function TitleBar({ session, instance, accountOpen, onAccountOpenChange, ...account }) {
   return (
     <header className="titlebar">
       <div className="titlebar-brand">
@@ -174,7 +220,7 @@ export default function TitleBar({ session, instance, ...account }) {
         <SessionChip session={session} instance={instance} />
       </div>
 
-      <AccountPill {...account} />
+      <AccountControl open={accountOpen} onOpenChange={onAccountOpenChange} {...account} />
 
       <div className="titlebar-controls">
         <button

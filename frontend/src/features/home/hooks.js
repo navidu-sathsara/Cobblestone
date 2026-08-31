@@ -20,6 +20,7 @@ export function useBackendVersion() {
  */
 export function useAccounts(onError) {
   const [store, setStore] = useState({ activeId: null, accounts: [] });
+  const [login, setLogin] = useState({ busy: false, stage: null, message: null });
 
   const refresh = useCallback(async () => {
     const next = await attempt(() => bridge.accounts.list(), onError);
@@ -28,9 +29,13 @@ export function useAccounts(onError) {
 
   useEffect(() => {
     refresh();
-    return subscribe('auth:changed', (next) => {
+    const offChanged = subscribe('auth:changed', (next) => {
       setStore({ activeId: next?.activeId ?? null, accounts: next?.accounts || [] });
     });
+    const offProgress = subscribe('auth:progress', ({ stage, message } = {}) => {
+      setLogin((current) => ({ ...current, stage: stage || null, message: message || 'Signing in…' }));
+    });
+    return () => { offChanged(); offProgress(); };
   }, [refresh]);
 
   const active = useMemo(
@@ -38,9 +43,23 @@ export function useAccounts(onError) {
     [store],
   );
 
+  const loginMicrosoft = useCallback(async () => {
+    if (login.busy) return null;
+    setLogin({ busy: true, stage: 'browser', message: 'Opening Microsoft sign-in…' });
+    const account = await attempt(() => bridge.accounts.loginMicrosoft(), onError);
+    if (account) {
+      await refresh();
+      setLogin({ busy: false, stage: 'complete', message: `Signed in as ${account.username}` });
+    } else {
+      setLogin({ busy: false, stage: 'failed', message: 'Microsoft sign-in did not complete' });
+    }
+    return account;
+  }, [login.busy, onError, refresh]);
+
   return {
     accounts: store.accounts,
     active,
+    login,
     setActive: useCallback(
       (id) => attempt(() => bridge.accounts.setActive(id), onError),
       [onError],
@@ -49,10 +68,7 @@ export function useAccounts(onError) {
       (username) => attempt(() => bridge.accounts.addOffline(username), onError),
       [onError],
     ),
-    loginMicrosoft: useCallback(
-      () => attempt(() => bridge.accounts.loginMicrosoft(), onError),
-      [onError],
-    ),
+    loginMicrosoft,
   };
 }
 
@@ -67,6 +83,8 @@ function byRecency(a, b) {
 export function useLaunchTarget(onError) {
   const [instances, setInstances] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [creating, setCreating] = useState(false);
+  const creatingRef = useRef(false);
 
   const refresh = useCallback(async () => {
     const list = await attempt(() => bridge.instances.list(), onError);
@@ -90,18 +108,29 @@ export function useLaunchTarget(onError) {
    * has something to launch. Vanilla by default: no loader resolution can fail.
    */
   const createDefault = useCallback(async () => {
-    const releases = await attempt(() => bridge.versions.list({ types: ['release'], limit: 1 }), onError);
-    const latest = releases?.[0]?.id;
-    if (!latest) return null;
-    const created = await attempt(
-      () => bridge.instances.create({ name: 'Cobblestone', minecraftVersion: latest, loader: 'vanilla' }),
-      onError,
-    );
-    if (created) setSelectedId(created.id);
-    return created;
+    if (creatingRef.current) return null;
+    creatingRef.current = true;
+    setCreating(true);
+    try {
+      const releases = await attempt(() => bridge.versions.list({ types: ['release'], limit: 1 }), onError);
+      const latest = releases?.[0]?.id;
+      if (!latest) return null;
+      const created = await attempt(
+        () => bridge.instances.create({ name: 'Cobblestone', minecraftVersion: latest, loader: 'vanilla' }),
+        onError,
+      );
+      if (created) {
+        setInstances((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+        setSelectedId(created.id);
+      }
+      return created;
+    } finally {
+      creatingRef.current = false;
+      setCreating(false);
+    }
   }, [onError]);
 
-  return { instance, instances, select: setSelectedId, createDefault };
+  return { instance, instances, select: setSelectedId, createDefault, creating };
 }
 
 const BUSY_STATUSES = new Set(['preparing', 'installing', 'launching', 'stopping']);

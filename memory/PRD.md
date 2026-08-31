@@ -20,6 +20,18 @@ Hard constraints from the user: never run/start/build the app (no npm/pnpm run, 
 - test/ — 5 Node test-runner files. Packaging (electron-builder/auto-update) not configured.
 
 ## Done
+- 2026-08-31: v4.0.5 account/home interaction update:
+  - Replaced the cramped titlebar account menu with a compact account trigger and a
+    full sign-in/profile modal with saved profiles, Microsoft progress, inline errors,
+    and offline-profile creation.
+  - Fixed Microsoft OAuth hanging by keeping msmc raw-browser output enabled; msmc
+    uses that output to discover Chromium's debugging port and observe the callback.
+  - Partnered servers now lead the right rail; Community and Store are anchored at
+    the bottom. Offline servers cannot trigger a launch.
+  - Hero launch now routes missing-account launches to the sign-in modal, guards
+    repeated instance creation, and immediately selects newly created instances.
+  - Verified with direct renderer AST parsing, JavaScript syntax checks, and 21 Node
+    tests. The app was not run or built.
 - 2026-06: Full home-page remake (renderer only, no backend/electron/IPC changes):
   - New token system in styles/theme.css: deepslate greys + copper primary, amethyst/lime
     secondaries, condensed display font stack (Bahnschrift/DIN family) + system UI text stack,

@@ -5,11 +5,14 @@ const assert = require('node:assert/strict');
 const fsp = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
+const { EventEmitter } = require('node:events');
 const { loaderFromDependencies } = require('../backend/services/modpack-service');
 const { neoforgeMatches } = require('../backend/services/loader-service');
 const { parseAddress, flattenDescription } = require('../backend/services/server-service');
 const { redact } = require('../backend/services/game-service');
 const { createLauncherBackend } = require('../backend');
+const { LauncherPaths } = require('../backend/core/paths');
+const { AccountService } = require('../backend/services/account-service');
 
 test('loader metadata normalizes all supported pack loaders', () => {
   assert.deepEqual(loaderFromDependencies({ minecraft: '1.21.1', 'fabric-loader': '0.16.0' }), {
@@ -31,6 +34,41 @@ test('server addresses and chat descriptions are normalized', () => {
 test('game logs redact access credentials', () => {
   assert.equal(redact('java --accessToken secret-value --uuid abc').includes('secret-value'), false);
   assert.equal(redact('{"accessToken":"secret-value"}').includes('secret-value'), false);
+});
+
+test('Microsoft login keeps msmc browser output enabled for OAuth callback discovery', async (t) => {
+  const directory = await fsp.mkdtemp(path.join(os.tmpdir(), 'cobblestone-auth-'));
+  t.after(() => fsp.rm(directory, { recursive: true, force: true }));
+  let launchOptions;
+  const vault = {
+    values: new Map(),
+    async get(key) { return this.values.get(key) ?? null; },
+    async set(key, value) { this.values.set(key, value); },
+    async delete(key) { this.values.delete(key); },
+  };
+  const service = new AccountService(
+    new LauncherPaths(directory).ensure(),
+    new EventEmitter(),
+    vault,
+    {
+      authFactory: () => ({
+        on() {},
+        async launch(framework, options) {
+          assert.equal(framework, 'raw');
+          launchOptions = options;
+          return {
+            save: () => 'refresh-token',
+            getMinecraft: async () => ({ profile: { id: 'profile-id', name: 'Player' } }),
+          };
+        },
+      }),
+    },
+  );
+
+  const account = await service.loginMicrosoft();
+  assert.equal(account.username, 'Player');
+  assert.equal(launchOptions.suppress, undefined);
+  assert.equal(await vault.get('microsoft:profile-id'), 'refresh-token');
 });
 
 test('composed backend starts with no renderer or theme state', async (t) => {
