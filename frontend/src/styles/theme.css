@@ -1,0 +1,166 @@
+/* Design tokens for the launcher shell. Every surface colour used by the home
+   page resolves to one of these so the whole window can be retoned in one file. */
+:root {
+  --shell-bg: #0f1217;
+  --chrome-bg: #0b0d11;
+  --rail-bg: #07080a;
+  --panel-bg: #14181f;
+  --panel-bg-hover: #1a1f28;
+  --panel-raised: #1e242e;
+
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.11);
+
+  --text: #ffffff;
+  --text-dim: #9aa4b2;
+  --text-muted: #6b7280;
+  --text-faint: #4b5563;
+
+  --accent-from: #f7b055;
+  --accent-mid: #ef9333;
+  --accent-to: #df7c1b;
+
+  --online: #3ddc70;
+  --idle: #f2c33c;
+  --offline: #4b5563;
+
+  --discord-from: #4149c8;
+  --discord-to: #232a6d;
+  --discord-pill: #5b64e8;
+  --store-from: #3bb45c;
+  --store-to: #166b30;
+
+  --radius-card: 10px;
+  --radius-row: 8px;
+
+  --rail-w: 70px;
+  --aside-w: 246px;
+  --chrome-h: 52px;
+
+  --font: "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--shell-bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  /* The window is frameless; only elements that opt in are draggable. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+img {
+  display: block;
+  -webkit-user-drag: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 2px;
+}
+
+/* Section labels: "NEWS", "FRIENDS", "PARTNERED SERVERS". */
+.eyebrow {
+  margin: 0;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.eyebrow--muted {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+/* Presence / status indicator shared by friend rows and server rows. */
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--offline);
+}
+
+.dot--online {
+  background: var(--online);
+  box-shadow: 0 0 6px rgba(61, 220, 112, 0.5);
+}
+
+.dot--idle {
+  background: var(--idle);
+  box-shadow: 0 0 6px rgba(242, 195, 60, 0.45);
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Scrolls on wheel/keyboard without a gutter, so rows keep their full width and
+   the clipped last row is what signals more content. */
+.scroll-hidden {
+  scrollbar-width: none;
+}
+
+.scroll-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

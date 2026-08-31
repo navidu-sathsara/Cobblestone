@@ -1,98 +1,99 @@
+'use strict';
+
+/**
+ * Narrow preload bridge.
+ *
+ * The renderer never receives `ipcRenderer`. Each operation the home page needs
+ * is exposed as its own function, backend event delivery is filtered against an
+ * allowlist, and the `{ ok, value | error }` envelope used by the backend
+ * adapter is unwrapped into ordinary promise resolution/rejection.
+ */
+
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Set by main.js via webPreferences.additionalArguments.
-const versionArg = process.argv.find((arg) => arg.startsWith('--app-version='));
+/** Backend events the renderer is allowed to observe. */
+const EVENT_NAMES = new Set([
+  'auth:progress', 'auth:changed', 'settings:changed', 'download:progress',
+  'instance:created', 'instance:updated', 'instance:deleted', 'instance:operation',
+  'content:install', 'content:removed', 'modpack:progress', 'backup:created',
+  'game:install', 'game:state', 'game:progress', 'game:log', 'java:install', 'loader:install',
+]);
 
-contextBridge.exposeInMainWorld('native', {
-  version: versionArg ? versionArg.slice('--app-version='.length) : null,
-  minimize: () => ipcRenderer.send('window:minimize'),
-  maximize: () => ipcRenderer.send('window:maximize'),
-  close: () => ipcRenderer.send('window:close'),
-  openExternal: (url) => ipcRenderer.invoke('external:open', url),
-  onMaximizedChange: (callback) =>
-    ipcRenderer.on('window:maximized', (_event, isMaximized) => callback(isMaximized)),
-  instances: {
-    load: () => ipcRenderer.invoke('instances:load'),
-    save: (data) => ipcRenderer.invoke('instances:save', data)
-  },
-  auth: {
-    login: () => ipcRenderer.invoke('auth:login'),
-    restore: () => ipcRenderer.invoke('auth:restore'),
-    logout: () => ipcRenderer.invoke('auth:logout')
-  },
-  accounts: {
-    list:         ()     => ipcRenderer.invoke('accounts:list'),
-    addOffline:   (name) => ipcRenderer.invoke('accounts:addOffline', name),
-    addMicrosoft: ()     => ipcRenderer.invoke('accounts:addMicrosoft'),
-    addNative:    ()     => ipcRenderer.invoke('accounts:addNative'),
-    onNativeLinkState: (callback) => subscribe('accounts:nativeLinkState', callback),
-    setActive:    (id)   => ipcRenderer.invoke('accounts:setActive', id),
-    remove:       (id)   => ipcRenderer.invoke('accounts:remove', id),
-    getAvatar:    (uuid) => ipcRenderer.invoke('accounts:getAvatar', uuid)
-  },
-  settings: {
-    load: () => ipcRenderer.invoke('settings:load'),
-    save: (settings) => ipcRenderer.invoke('settings:save', settings),
-    detectJava: () => ipcRenderer.invoke('settings:detectJava'),
-    dataDir: () => ipcRenderer.invoke('settings:dataDir'),
-    openDataDir: () => ipcRenderer.invoke('settings:openDataDir'),
-    storageInfo: () => ipcRenderer.invoke('settings:storageInfo')
-  },
-  java: {
-    test: (javaPath) => ipcRenderer.invoke('java:test', javaPath),
-    detectFor: (major) => ipcRenderer.invoke('java:detectFor', major),
-    install: (major) => ipcRenderer.invoke('java:install', major),
-    browse: () => ipcRenderer.invoke('java:browse'),
-    onProgress: (callback) => subscribe('java:progress', callback)
-  },
-  mods: {
-    installed: (instanceId) => ipcRenderer.invoke('mods:installed', instanceId),
-    install: (payload) => ipcRenderer.invoke('mods:install', payload),
-    remove: (payload) => ipcRenderer.invoke('mods:remove', payload)
-  },
-  modpacks: {
-    install: (projectId) => ipcRenderer.invoke('modpack:install', projectId),
-    onProgress: (callback) => subscribe('modpack:progress', callback)
-  },
-  launcher: {
-    launch: (instance, account) =>
-      ipcRenderer.send('launcher:launch', { instance, account }),
-    kill: () => ipcRenderer.send('launcher:kill'),
-    onState: (callback) => subscribe('launcher:state', callback),
-    onProgress: (callback) => subscribe('launcher:progress', callback),
-    onLog: (callback) => subscribe('launcher:log', callback)
-  },
-  updater: {
-    check: () => ipcRenderer.invoke('updater:check'),
-    download: () => ipcRenderer.invoke('updater:download'),
-    install: () => ipcRenderer.invoke('updater:install'),
-    onStatus: (callback) => subscribe('updater:status', callback)
-  },
-  instance: {
-    listDir:     (id, sub)  => ipcRenderer.invoke('instance:listDir', id, sub),
-    openFolder:  (id, sub)  => ipcRenderer.invoke('instance:openFolder', id, sub),
-    worldList:   (id)       => ipcRenderer.invoke('instance:worldList', id),
-    deleteWorld: (id, name) => ipcRenderer.invoke('instance:deleteWorld', id, name),
-    getLogFile:  (id)       => ipcRenderer.invoke('instance:getLogFile', id),
-    isInstalled: (version, loader) => ipcRenderer.invoke('instance:isInstalled', version, loader),
-    recentServers: ()       => ipcRenderer.invoke('instance:recentServers')
-  },
-  news: {
-    list: (options) => ipcRenderer.invoke('news:list', options)
-  },
-  server: {
-    ping: (address) => ipcRenderer.invoke('server:ping', address)
-  },
-  telemetry: {
-    trackFetch: (payload) => ipcRenderer.send('telemetry:fetch', payload),
-    profile: () => ipcRenderer.invoke('telemetry:profile'),
-    flush: () => ipcRenderer.invoke('telemetry:flush'),
-    onUpdated: (callback) => subscribe('telemetry:updated', callback)
+const listeners = new Map();
+
+ipcRenderer.on('cobblestone:event', (_event, message) => {
+  for (const listener of listeners.get(message?.name) || []) {
+    try {
+      listener(message.payload);
+    } catch {
+      // A faulty renderer callback must not break event delivery to the others.
+    }
   }
 });
 
-function subscribe(channel, callback) {
-  const listener = (_event, payload) => callback(payload);
-  ipcRenderer.on(channel, listener);
-  return () => ipcRenderer.removeListener(channel, listener);
+async function call(channel, payload = {}) {
+  const envelope = await ipcRenderer.invoke(channel, payload);
+  if (envelope?.ok) return envelope.value;
+  const error = new Error(envelope?.error?.message || 'The launcher did not respond');
+  error.code = envelope?.error?.code || 'UNEXPECTED_ERROR';
+  error.details = envelope?.error?.details;
+  throw error;
 }
+
+function subscribe(name, listener) {
+  if (!EVENT_NAMES.has(name) || typeof listener !== 'function') return () => {};
+  if (!listeners.has(name)) listeners.set(name, new Set());
+  listeners.get(name).add(listener);
+  return () => { listeners.get(name)?.delete(listener); };
+}
+
+contextBridge.exposeInMainWorld('cobblestone', {
+  isDesktop: true,
+
+  status: () => call('core:status'),
+
+  settings: {
+    get: () => call('settings:get'),
+  },
+
+  accounts: {
+    list: () => call('accounts:list'),
+    loginMicrosoft: () => call('accounts:loginMicrosoft'),
+    addOffline: (username) => call('accounts:addOffline', { username }),
+    setActive: (id) => call('accounts:setActive', { id }),
+    remove: (id) => call('accounts:remove', { id }),
+  },
+
+  versions: {
+    list: (options) => call('versions:list', options),
+  },
+
+  instances: {
+    list: () => call('instances:list'),
+    create: (payload) => call('instances:create', payload),
+  },
+
+  installation: {
+    status: (instanceId) => call('installation:status', { instanceId }),
+  },
+
+  game: {
+    launch: (instanceId, options) => call('game:launch', { instanceId, options }),
+    stop: (instanceId) => call('game:stop', { instanceId }),
+    list: () => call('game:list'),
+  },
+
+  servers: {
+    ping: (address) => call('servers:ping', { address }),
+  },
+
+  window: {
+    minimize: () => call('window:minimize'),
+    maximize: () => call('window:maximize'),
+    close: () => call('window:close'),
+  },
+
+  openExternal: (url) => call('app:openExternal', { url }),
+
+  on: subscribe,
+});

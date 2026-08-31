@@ -1,124 +1,269 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const gameLauncher = require('./launcher');
-const mods = require('./mods');
-const authMod = require('./auth');
-const settingsMod = require('./settings');
-const javaMod = require('./java');
-const modpacksMod = require('./modpacks');
-const updaterMod = require('./updater');
-const instanceMod = require('./instance');
-const newsMod = require('./news');
-const serverPingMod = require('./serverPing');
-const telemetryMod = require('./telemetry');
+'use strict';
 
-let win;
-const appIcon = path.join(__dirname, '..', 'icon.png');
+/**
+ * Electron host for the Cobblestone launcher core.
+ *
+ * The core ships no window, preload or navigation policy on purpose, so every
+ * host responsibility listed in docs/ADVANCED_BACKEND_GUIDE.md ("Security
+ * model" -> "Host responsibilities") is implemented here: sandboxed renderer,
+ * context isolation, a strict CSP, an exact-match custom protocol, navigation
+ * and window-open denial, and no unrestricted ipcRenderer bridge.
+ */
+
+const path = require('node:path');
+const fsp = require('node:fs/promises');
+const { pathToFileURL } = require('node:url');
+const { app, BrowserWindow, ipcMain, net, protocol, session, shell } = require('electron');
+const { createLauncherBackend } = require('../backend');
+const { registerElectronIpc } = require('../backend/adapters/electron-ipc');
+const { serializeError } = require('../backend/core/errors');
+const { version: appVersion } = require('../package.json');
+const { buildCsp, EXTERNAL_LINK_HOSTS } = require('./csp');
+const { createSenderValidator, isAllowedExternalUrl, resolveRendererFile } = require('./guards');
+
+const RENDERER_ROOT = path.join(__dirname, '..', 'frontend', 'dist');
+const APP_SCHEME = 'app';
+const APP_HOST = 'launcher';
+// Set by scripts/dev-desktop.js; absent in a packaged/production run.
+const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL || null;
+const RENDERER_URL = DEV_SERVER_URL || `${APP_SCHEME}://${APP_HOST}/index.html`;
+
+let launcher = null;
+let disposeBackendIpc = null;
+let mainWindow = null;
+let shuttingDown = false;
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: APP_SCHEME,
+    privileges: { standard: true, secure: true, supportFetchAPI: true },
+  },
+]);
+
+/**
+ * Serves the built renderer. Host matching and path containment live in
+ * ./guards.js so they are unit tested away from Electron.
+ */
+async function serveRenderer(request) {
+  const resolved = resolveRendererFile(RENDERER_ROOT, request.url, APP_HOST);
+  if (!resolved.ok) return new Response('Not available', { status: resolved.status });
+
+  try {
+    await fsp.access(resolved.file);
+  } catch {
+    return new Response('Not found', { status: 404 });
+  }
+  return net.fetch(pathToFileURL(resolved.file).toString());
+}
+
+const validateSender = createSenderValidator({
+  scheme: APP_SCHEME,
+  host: APP_HOST,
+  devServerOrigin: DEV_SERVER_URL,
+});
+
+/** True for https URLs on an allowlisted community domain. */
+const isAllowedLink = (url) => isAllowedExternalUrl(url, EXTERNAL_LINK_HOSTS);
+
+/**
+ * Registers the window-chrome and link channels the backend adapter does not
+ * own, using the same validated `{ ok, value | error }` envelope.
+ */
+function registerHostIpc() {
+  const channels = [];
+  const handle = (channel, operation) => {
+    ipcMain.handle(channel, async (event, payload = {}) => {
+      if (!validateSender(event.senderFrame)) {
+        return { ok: false, error: { code: 'UNTRUSTED_SENDER', message: 'IPC sender is not trusted' } };
+      }
+      try {
+        return { ok: true, value: await operation(payload, event) };
+      } catch (error) {
+        return { ok: false, error: serializeError(error) };
+      }
+    });
+    channels.push(channel);
+  };
+
+  const windowFor = (event) => BrowserWindow.fromWebContents(event.sender);
+
+  handle('window:minimize', (_payload, event) => {
+    windowFor(event)?.minimize();
+    return true;
+  });
+  handle('window:maximize', (_payload, event) => {
+    const target = windowFor(event);
+    if (!target) return false;
+    if (target.isMaximized()) target.unmaximize();
+    else target.maximize();
+    return target.isMaximized();
+  });
+  handle('window:close', (_payload, event) => {
+    windowFor(event)?.close();
+    return true;
+  });
+  handle('app:openExternal', async ({ url }) => {
+    if (!isAllowedLink(url)) {
+      throw Object.assign(new Error('This link is not on the allowlist'), {
+        code: 'VALIDATION_ERROR',
+        details: { url: String(url).slice(0, 200) },
+      });
+    }
+    await shell.openExternal(url);
+    return true;
+  });
+
+  return () => {
+    for (const channel of channels) ipcMain.removeHandler(channel);
+  };
+}
+
+/** Applies the CSP and refuses renderer-initiated permission requests. */
+function hardenSession(target) {
+  const csp = buildCsp({ devServerOrigin: DEV_SERVER_URL ? new URL(DEV_SERVER_URL).origin : null });
+
+  target.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [csp],
+        'X-Content-Type-Options': ['nosniff'],
+      },
+    });
+  });
+
+  target.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
+  target.setPermissionCheckHandler(() => false);
+  target.on('will-download', (event) => event.preventDefault());
+}
+
+/** Denies in-app navigation and popups for every WebContents in the process. */
+function guardNavigation(contents) {
+  const rendererOrigin = new URL(RENDERER_URL).origin;
+
+  contents.on('will-navigate', (event, url) => {
+    let target;
+    try {
+      target = new URL(url);
+    } catch {
+      event.preventDefault();
+      return;
+    }
+    if (target.origin !== rendererOrigin) event.preventDefault();
+  });
+  contents.on('will-attach-webview', (event) => event.preventDefault());
+  contents.setWindowOpenHandler(({ url }) => {
+    if (isAllowedLink(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+}
 
 function createWindow() {
-  win = new BrowserWindow({
-    width: 1160,
-    height: 750,
-    minWidth: 980,
-    minHeight: 640,
+  const window = new BrowserWindow({
+    // The renderer draws its own titlebar and window controls.
     frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
-    icon: appIcon,
-    title: 'Native',
+    useContentSize: true,
+    width: 1024,
+    height: 580,
+    minWidth: 940,
+    minHeight: 540,
+    backgroundColor: '#0f1217',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
-      // The renderer shows the version in a few places. Passing it as an
-      // argument lets preload expose it synchronously, so nothing has to
-      // render a placeholder while an IPC round-trip resolves.
-      additionalArguments: [`--app-version=${app.getVersion()}`]
-    }
+      nodeIntegrationInSubFrames: false,
+      webviewTag: false,
+      spellcheck: false,
+    },
   });
 
-  win.on('maximize', () => win.webContents.send('window:maximized', true));
-  win.on('unmaximize', () => win.webContents.send('window:maximized', false));
-
-  // Never let untrusted pages replace the renderer that owns the privileged
-  // preload bridge. Web links are opened by the OS instead.
-  win.webContents.on('will-navigate', (event, url) => {
-    const currentUrl = win.webContents.getURL();
-    if (url === currentUrl) return;
-    event.preventDefault();
-    if (/^https?:\/\//i.test(url)) shell.openExternal(url);
+  window.once('ready-to-show', () => window.show());
+  window.on('closed', () => {
+    if (mainWindow === window) mainWindow = null;
   });
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//i.test(url)) shell.openExternal(url);
-    return { action: 'deny' };
-  });
-
-  const devServerUrl = process.env.VITE_DEV_SERVER_URL;
-  if (devServerUrl) {
-    win.loadURL(devServerUrl);
-  } else {
-    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
-  }
+  window.loadURL(RENDERER_URL);
+  return window;
 }
 
-const instancesPath = () => path.join(app.getPath('userData'), 'instances.json');
-
-ipcMain.handle('instances:load', () => {
-  try {
-    return JSON.parse(fs.readFileSync(instancesPath(), 'utf8'));
-  } catch {
-    return null;
-  }
-});
-
-ipcMain.handle('instances:save', (_event, data) => {
-  fs.mkdirSync(path.dirname(instancesPath()), { recursive: true });
-  fs.writeFileSync(instancesPath(), JSON.stringify(data, null, 2));
-});
-
-ipcMain.on('window:minimize', () => win?.minimize());
-ipcMain.on('window:maximize', () => {
-  if (win?.isMaximized()) win.unmaximize();
-  else win?.maximize();
-});
-ipcMain.on('window:close', () => win?.close());
-
-ipcMain.handle('external:open', async (_event, value) => {
-  const url = new URL(String(value));
-  if (!['https:', 'http:'].includes(url.protocol)) throw new Error('Unsupported link');
-  await shell.openExternal(url.href);
-});
-
-telemetryMod.init({ app, getWin: () => win, getLinkedNativeAccount: authMod.getLinkedNativeAccount }, ipcMain);
-gameLauncher.init({ app, getWin: () => win, telemetry: telemetryMod }, ipcMain);
-mods.init({ app }, ipcMain);
-authMod.init({ app, getWin: () => win }, ipcMain);
-settingsMod.init({ app }, ipcMain);
-javaMod.init({ app, getWin: () => win }, ipcMain);
-modpacksMod.init({ app, getWin: () => win }, ipcMain);
-updaterMod.init({ app, getWin: () => win }, ipcMain);
-instanceMod.init({ app }, ipcMain);
-newsMod.init({ app }, ipcMain);
-serverPingMod.init({ app }, ipcMain);
-
-app.whenReady().then(() => {
-  app.setName('Native');
-  telemetryMod.startSession();
-  createWindow();
-  win.once('ready-to-show', () => win.show());
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-      win.once('ready-to-show', () => win.show());
+/**
+ * CI/verification hook. With COBBLESTONE_CAPTURE=<png path> the host renders the
+ * window once, writes a screenshot and exits. It changes nothing in a normal run.
+ */
+function captureAndExit(window, destination) {
+  window.webContents.once('did-finish-load', async () => {
+    const settleMs = Number(process.env.COBBLESTONE_CAPTURE_DELAY || 3000);
+    await new Promise((resolve) => { setTimeout(resolve, settleMs); });
+    try {
+      const image = await window.webContents.capturePage();
+      await fsp.writeFile(destination, image.toPNG());
+    } finally {
+      app.quit();
     }
   });
-});
+}
 
-app.on('before-quit', () => telemetryMod.endSession());
+let disposeHostIpc = null;
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  });
+
+  app.on('web-contents-created', (_event, contents) => guardNavigation(contents));
+
+  app.whenReady().then(() => {
+    // Left undefined so LauncherPaths uses the documented ~/.cobblestone root
+    // (or COBBLESTONE_DATA_DIR), keeping the CLI and the desktop app on one
+    // data directory instead of Electron's per-app userData path. The version
+    // comes from package.json: app.getVersion() reports Electron's own version
+    // in an unpackaged run.
+    launcher = createLauncherBackend({ version: appVersion });
+
+    protocol.handle(APP_SCHEME, serveRenderer);
+    hardenSession(session.defaultSession);
+
+    disposeBackendIpc = registerElectronIpc({
+      ipcMain,
+      backend: launcher,
+      validateSender,
+      eventSink: (name, payload) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('cobblestone:event', { name, payload });
+        }
+      },
+    });
+    disposeHostIpc = registerHostIpc();
+
+    mainWindow = createWindow();
+    if (process.env.COBBLESTONE_CAPTURE) captureAndExit(mainWindow, process.env.COBBLESTONE_CAPTURE);
+
+    app.on('activate', () => {
+      if (!BrowserWindow.getAllWindows().length) mainWindow = createWindow();
+    });
+  });
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+  });
+
+  app.on('before-quit', (event) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    event.preventDefault();
+    (async () => {
+      disposeHostIpc?.();
+      disposeBackendIpc?.();
+      await launcher?.shutdown().catch(() => undefined);
+      app.exit(0);
+    })();
+  });
+}
+
+

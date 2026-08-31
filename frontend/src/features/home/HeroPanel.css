@@ -1,0 +1,234 @@
+.hero {
+  position: relative;
+  flex: 1;
+  min-height: 240px;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #0d0a12;
+  overflow: hidden;
+}
+
+/* Minecraft-toned backdrop painted entirely in CSS: amethyst-lit ceiling, lava
+   glow low-left, deepslate base. Replaced by .hero-photo when a screenshot URL
+   is supplied. */
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 85% at 50% 4%, rgba(146, 104, 196, 0.34), transparent 58%),
+    radial-gradient(58% 46% at 20% 82%, rgba(255, 138, 38, 0.26), transparent 72%),
+    radial-gradient(46% 40% at 84% 26%, rgba(151, 112, 205, 0.18), transparent 70%),
+    radial-gradient(40% 34% at 68% 88%, rgba(255, 116, 32, 0.14), transparent 74%),
+    linear-gradient(180deg, #171122 0%, #100c17 46%, #1a1018 100%);
+}
+
+/* Faint block grid so an empty backdrop still reads as terrain. */
+.hero-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.44;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.26) 0 1px, transparent 1px 18px);
+  -webkit-mask-image: radial-gradient(130% 110% at 50% 42%, #000 32%, transparent 92%);
+  mask-image: radial-gradient(130% 110% at 50% 42%, #000 32%, transparent 92%);
+}
+
+.hero-photo {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.hero-vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), transparent 32%, rgba(0, 0, 0, 0.44));
+  box-shadow: inset 0 0 90px 26px rgba(0, 0, 0, 0.6);
+}
+
+.hero-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.hero-nametag {
+  padding: 3px 12px 4px;
+  border-radius: 5px;
+  background: rgba(10, 10, 12, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.hero-skin {
+  width: auto;
+  height: 200px;
+  margin-top: 7px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.55));
+}
+
+.hero-skin--fallback {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Split control: primary action plus an instance picker, sharing one gradient
+   so the seam is a highlight rather than a gap. Deliberately not clipped with
+   overflow, because the picker menu escapes the bounds. */
+.launch {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: 227px;
+  height: 47px;
+  margin-top: -46px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, var(--accent-from) 0%, var(--accent-mid) 48%, var(--accent-to) 100%);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.launch-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 9px 0 0 9px;
+  color: #ffffff;
+  transition: background 120ms ease;
+}
+
+.launch-main:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.launch-label {
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(122, 52, 0, 0.45);
+}
+
+.launch-subtitle {
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.launch-more {
+  display: grid;
+  place-items: center;
+  width: 35px;
+  border-radius: 0 9px 9px 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transition: background 120ms ease;
+}
+
+.launch-more:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+/* Indeterminate sweep: the backend reports phases, not a byte total, so the bar
+   signals activity without inventing a percentage. */
+.launch-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 0 0 9px 9px;
+  background: rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.launch-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 38%;
+  background: rgba(255, 255, 255, 0.88);
+  animation: launch-sweep 1.15s ease-in-out infinite;
+}
+
+@keyframes launch-sweep {
+  from { left: -40%; }
+  to { left: 102%; }
+}
+
+.launch-menu {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 0;
+  z-index: 30;
+  width: 100%;
+  min-width: 227px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #171c24;
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.55);
+}
+
+.launch-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 7px;
+  color: var(--text);
+  text-align: left;
+  transition: background 110ms ease;
+}
+
+.launch-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.launch-menu-item--active {
+  background: rgba(239, 147, 51, 0.14);
+}
+
+.launch-menu-item--action {
+  color: var(--text-dim);
+}
+
+.launch-menu-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launch-menu-meta {
+  color: var(--text-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.launch-menu-divider {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--line);
+}

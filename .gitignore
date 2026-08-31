@@ -1,10 +1,11 @@
 node_modules/
 dist/
 release/
-native.zip
+coverage/
+*.part
+*.tmp
 
 # secrets
-electron-builder.env
 .env
 .env.*
 *.pem
