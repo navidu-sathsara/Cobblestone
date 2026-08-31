@@ -1,6 +1,6 @@
 {
   "name": "cobblestone-launcher-core",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "Backend-only Minecraft Java launcher core for Electron and Node.js hosts",
   "main": "backend/index.js",
   "bin": {
@@ -10,7 +10,6 @@
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "start": "node backend/cli.js doctor",
     "doctor": "node backend/cli.js doctor",
