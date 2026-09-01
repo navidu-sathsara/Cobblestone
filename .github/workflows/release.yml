@@ -125,7 +125,22 @@ jobs:
         id: prepare
         run: |
           mkdir -p release-assets
-          find downloaded-artifacts -type f -exec cp -t release-assets/ {} +
+          find downloaded-artifacts -type f \( \
+            -name "*.exe" -o \
+            -name "*.zip" -o \
+            -name "*.dmg" -o \
+            -name "*.AppImage" -o \
+            -name "*.deb" -o \
+            -name "*.rpm" -o \
+            -name "*.tar.xz" -o \
+            -name "*.pacman" -o \
+            -name "*.appx" -o \
+            -name "*.appinstaller" -o \
+            -name "*.sha256" -o \
+            -name "*.blockmap" -o \
+            -name "manifest.json" -o \
+            -name "app-*.asar.gz" \
+          \) -exec cp -f {} release-assets/ \;
 
           cd release-assets
           echo "### Release Files:"
