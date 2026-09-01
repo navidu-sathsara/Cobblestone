@@ -17,9 +17,10 @@
     "exclude": [
         "docs/**/*",
         "packages/**/*.d.ts",
-        "xmcl-runtime-api/**/*",
-        "xmcl-runtime/**/*",
-        "xmcl-electron-app/**/*",
+        "cobblestone-runtime-api/**/*",
+        "cobblestone-runtime/**/*",
+        "cobblestone-electron-app/**/*",
+        "cobblestone-keystone-ui/**/*",
         "node_modules/**/*"
     ]
 }

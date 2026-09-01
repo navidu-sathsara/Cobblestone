@@ -71,7 +71,7 @@ async function buildMain(
   await copyFile(await resolveKoffiBinary(koffiPlatform, targetArch), join(__dirname, 'dist', 'koffi.node'))
   const time = ((Date.now() - startTime) / 1000).toFixed(2)
   if (!slient) console.log(`Build completed in ${time}s.`)
-  await copy(path.join(__dirname, '../xmcl-keystone-ui/dist'), path.join(__dirname, './dist/renderer'))
+  await copy(path.join(__dirname, '../cobblestone-keystone-ui/dist'), path.join(__dirname, './dist/renderer'))
   if (!slient) console.log('\n')
   return time
 }

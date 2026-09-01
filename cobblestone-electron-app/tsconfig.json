@@ -16,7 +16,7 @@
         "./main/*"
       ],
       "~/*": [
-        "../xmcl-runtime/*"
+        "../cobblestone-runtime/*"
       ]
     },
     "esModuleInterop": true,
@@ -39,6 +39,6 @@
   ],
   "exclude": [
     "node_modules",
-    "../xmcl-runtime"
+    "../cobblestone-runtime"
   ]
 }

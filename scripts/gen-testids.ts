@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
-const SOURCE_ROOT = resolve(REPO_ROOT, 'xmcl-keystone-ui/src')
+const SOURCE_ROOT = resolve(REPO_ROOT, 'cobblestone-keystone-ui/src')
 const OUTPUT = resolve(REPO_ROOT, 'e2e/TESTIDS.md')
 
 interface Hit {
