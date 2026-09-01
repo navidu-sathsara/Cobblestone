@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { ChevronUp, Clock, Layers, Play, Plus, Square, User } from 'lucide-react';
+import { ChevronDown, Play, Plus, Square, User } from 'lucide-react';
 import {
-  bodyUrl, formatBuild, formatInstallState, formatPlaytime, formatRelative, greeting,
+  bodyUrl, formatBuild, greeting,
 } from '../../lib/format.js';
 import { useDismiss } from '../../lib/use-dismiss.js';
 import './HeroPanel.css';
@@ -70,8 +70,8 @@ function InstanceMenu({ instances, instance, onSelectInstance, onCreateDefault, 
 }
 
 /**
- * The play surface. Left column carries the identity of what is about to run,
- * the right column the active player's body render.
+ * Cinematic play surface: environment at full bleed, player centered, launch
+ * action anchored over the lower edge of the render.
  *
  * `heroImage` is an optional screenshot URL. Without it the backdrop is painted
  * in CSS, so no binary assets are required.
@@ -108,102 +108,25 @@ export default function HeroPanel({
             ? `${busyLabel}…`
             : 'Launch game';
 
-  const lastPlayed = formatRelative(instance?.lastPlayedAt);
-
   return (
     <section className="hero" data-testid="hero-panel">
-      <div className="hero-sky" aria-hidden="true" />
-      <div className="hero-landscape" aria-hidden="true">
-        <span className="hero-moon" />
-        <span className="hero-ridge hero-ridge--back" />
-        <span className="hero-ridge hero-ridge--front" />
-        <span className="hero-ore hero-ore--one" />
-        <span className="hero-ore hero-ore--two" />
-        <span className="hero-ore hero-ore--three" />
-      </div>
-      {heroImage ? (
-        <div className="hero-photo" style={{ backgroundImage: `url(${heroImage})` }} aria-hidden="true" />
-      ) : null}
-      <div className="hero-grid" aria-hidden="true" />
-      <div className="hero-fade" aria-hidden="true" />
+      <div
+        className={`hero-art${heroImage ? ' hero-art--custom' : ''}`}
+        style={heroImage ? { backgroundImage: `url(${heroImage})` } : undefined}
+        aria-hidden="true"
+      />
+      <div className="hero-atmosphere" aria-hidden="true" />
 
       <div className="hero-inner">
-        <div className="hero-copy">
+        <div className="hero-context">
           <span className="hero-eyebrow" data-testid="hero-greeting">
             {greeting()}
             {username ? `, ${username}` : ''}
             {accountType === 'offline' ? <span className="hero-eyebrow-tag">offline</span> : null}
           </span>
-
-          <h1 className="hero-title" data-testid="hero-instance-name">
+          <strong className="hero-title" data-testid="hero-instance-name">
             {instance?.name || 'Ready to explore'}
-          </h1>
-
-          {!instance ? (
-            <p className="hero-subtitle">Build your first world, then keep every version and modpack in one place.</p>
-          ) : null}
-
-          <div className="hero-chips">
-            <span className={`chip${instance?.installState === 'broken' ? ' chip--warn' : ' chip--accent'}`}>
-              <Layers size={11} strokeWidth={2.6} />
-              {instance ? formatInstallState(instance.installState) : 'Nothing installed'}
-            </span>
-            <span className="chip">{formatBuild(instance)}</span>
-            <span className="chip">
-              <Clock size={11} strokeWidth={2.6} />
-              {instance ? formatPlaytime(instance.playTimeSeconds) : '—'}
-            </span>
-            {lastPlayed ? <span className="chip">Last played {lastPlayed}</span> : null}
-          </div>
-
-          <div className={`launch${session.busy ? ' launch--busy' : ''}`} ref={holder}>
-            <button
-              type="button"
-              className="launch-main"
-              disabled={session.busy || creating}
-              data-testid="launch-button"
-              onClick={() => {
-                if (!hasInstance) onCreateDefault();
-                else if (needsAccount) onRequireAccount();
-                else session.toggle();
-              }}
-            >
-              <span className="launch-glyph">
-                {session.running ? <Square size={13} strokeWidth={3} /> : <Play size={14} strokeWidth={3} />}
-              </span>
-              <span className="launch-label">{label}</span>
-            </button>
-
-            <button
-              type="button"
-              className="launch-more"
-              aria-label="Choose instance"
-              aria-haspopup="menu"
-              aria-expanded={open}
-              data-testid="launch-menu-toggle"
-              onClick={() => setOpen((value) => !value)}
-            >
-              <ChevronUp size={16} strokeWidth={2.8} className={open ? 'launch-caret launch-caret--open' : 'launch-caret'} />
-            </button>
-
-            {open ? (
-              <InstanceMenu
-                instances={instances}
-                instance={instance}
-                onSelectInstance={onSelectInstance}
-                onCreateDefault={onCreateDefault}
-                close={close}
-              />
-            ) : null}
-          </div>
-
-          <span className="hero-status" data-testid="hero-status">
-            {session.detail || (needsAccount
-              ? 'Choose a Microsoft account or offline profile first'
-              : hasInstance ? 'Ready when you are' : 'Create an instance to get started')}
-          </span>
-
-          {session.busy ? <span className="hero-progress" aria-hidden="true" /> : null}
+          </strong>
         </div>
 
         <div className="hero-stage">
@@ -211,6 +134,57 @@ export default function HeroPanel({
           <PlayerRender username={username} />
           <span className="hero-shadow" aria-hidden="true" />
         </div>
+
+        <div className={`launch${session.busy ? ' launch--busy' : ''}`} ref={holder}>
+          <button
+            type="button"
+            className="launch-main"
+            disabled={session.busy || creating}
+            data-testid="launch-button"
+            onClick={() => {
+              if (!hasInstance) onCreateDefault();
+              else if (needsAccount) onRequireAccount();
+              else session.toggle();
+            }}
+          >
+            <span className="launch-glyph">
+              {session.running ? <Square size={13} strokeWidth={3} /> : <Play size={14} strokeWidth={3} />}
+            </span>
+            <span className="launch-copy">
+              <span className="launch-label">{label}</span>
+              <span className="launch-build">{formatBuild(instance)}</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="launch-more"
+            aria-label="Choose instance"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            data-testid="launch-menu-toggle"
+            onClick={() => setOpen((value) => !value)}
+          >
+            <ChevronDown size={16} strokeWidth={2.8} className={open ? 'launch-caret launch-caret--open' : 'launch-caret'} />
+          </button>
+
+          {open ? (
+            <InstanceMenu
+              instances={instances}
+              instance={instance}
+              onSelectInstance={onSelectInstance}
+              onCreateDefault={onCreateDefault}
+              close={close}
+            />
+          ) : null}
+        </div>
+
+        <span className="hero-status" data-testid="hero-status">
+          {session.detail || (needsAccount
+            ? 'Choose an account to launch'
+            : hasInstance ? 'Ready to launch' : 'Create your first instance')}
+        </span>
+        {session.busy ? <span className="hero-progress" aria-hidden="true" /> : null}
       </div>
     </section>
   );

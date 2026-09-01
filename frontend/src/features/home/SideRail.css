@@ -1,21 +1,25 @@
 .rail {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-3);
+  gap: 10px;
   width: var(--rail-w);
-  padding: var(--s-4) 0 var(--s-3);
-  background: linear-gradient(180deg, var(--surface-1), var(--bg) 70%);
+  padding: 12px 0 11px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025), transparent 70%),
+    linear-gradient(180deg, #101319, #090b0f 72%);
   border-right: 1px solid var(--line);
+  box-shadow: inset -1px 0 rgba(255, 255, 255, 0.018);
 }
 
 .rail-list {
   display: flex;
   flex-direction: column;
-  gap: var(--s-1);
+  gap: 6px;
   width: 100%;
   margin: 0;
-  padding: 0 var(--s-3);
+  padding: 0 10px;
   list-style: none;
 }
 
@@ -35,37 +39,41 @@
   justify-content: center;
   gap: var(--s-1);
   width: 100%;
-  padding: var(--s-2) 0 7px;
-  border-radius: var(--r-md);
+  min-height: 62px;
+  padding: 8px 0 7px;
+  border: 1px solid transparent;
+  border-radius: 12px;
   color: var(--text-3);
-  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+  transition: background-color 160ms var(--ease), border-color 160ms var(--ease),
+    color 160ms var(--ease), transform 160ms var(--ease), box-shadow 160ms var(--ease);
 }
 
-/* Active marker: an ember bar bleeding off the rail's left edge. */
+/* A narrow luminous marker keeps the active destination readable at a glance. */
 .rail-item::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: calc(var(--s-3) * -1);
-  width: 3px;
+  left: -11px;
+  width: 2px;
   height: 0;
   border-radius: 0 3px 3px 0;
-  background: var(--text);
+  background: var(--accent-bright);
+  box-shadow: 0 0 12px var(--accent-glow);
   transform: translateY(-50%);
   transition: height 220ms var(--ease);
 }
 
 .rail-item:hover {
   color: var(--text);
-}
-
-.rail-item:hover .rail-glyph {
-  background: var(--surface-3);
-  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.035);
+  transform: translateY(-1px);
 }
 
 .rail-item--active {
   color: var(--text);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.055), 0 8px 24px rgba(0, 0, 0, 0.26);
 }
 
 .rail-item--active::before {
@@ -75,23 +83,37 @@
 .rail-glyph {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 32px;
-  border-radius: var(--r-sm);
-  border: 1px solid transparent;
-  transition: background-color 160ms var(--ease), border-color 160ms var(--ease),
-    color 160ms var(--ease), box-shadow 160ms var(--ease);
+  width: 32px;
+  height: 30px;
+  transition: transform 160ms var(--ease), filter 160ms var(--ease), opacity 160ms var(--ease);
+}
+
+.rail-glyph img {
+  width: 32px;
+  height: 30px;
+  object-fit: contain;
+  opacity: 0.72;
+  filter: grayscale(0.42) saturate(0.72);
+  transition: inherit;
+}
+
+.rail-item:hover .rail-glyph img {
+  opacity: 0.92;
+  filter: grayscale(0.12) saturate(0.9);
 }
 
 .rail-item--active .rail-glyph {
-  background: var(--surface-3);
-  border-color: var(--line-strong);
-  color: var(--text);
-  box-shadow: var(--sh-1);
+  filter: drop-shadow(0 0 7px var(--accent-glow));
+  transform: scale(1.04);
+}
+
+.rail-item--active .rail-glyph img {
+  opacity: 1;
+  filter: none;
 }
 
 .rail-label {
-  font-size: var(--fs-0);
+  font-size: 8.5px;
   font-weight: 750;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -99,12 +121,11 @@
 
 .rail-external {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--text-3);
+  top: 9px;
+  right: 8px;
+  color: var(--text-3);
+  font-size: 10px;
+  line-height: 1;
 }
 
 .rail-version {
@@ -112,6 +133,7 @@
   font-family: var(--font-mono);
   font-size: var(--fs-1);
   letter-spacing: 0.06em;
+  opacity: 0.72;
 }
 
 /* Narrow windows: the rail becomes a bottom bar so navigation never vanishes. */

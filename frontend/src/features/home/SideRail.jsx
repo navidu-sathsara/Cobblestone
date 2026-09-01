@@ -1,13 +1,13 @@
 import './SideRail.css';
 
 const NAV = [
-  { id: 'play', label: 'Play', iconSrc: '/play_icon.jpg' },
-  { id: 'instances', label: 'Instances', iconSrc: '/instances_icon.jpg' },
-  { id: 'content', label: 'Content', iconSrc: '/content_icon.jpg' },
-  { id: 'store', label: 'Store', iconSrc: '/store_icon.jpg', external: true },
+  { id: 'play', label: 'Play', iconSrc: '/nav-play.png' },
+  { id: 'instances', label: 'Instances', iconSrc: '/nav-instances.png' },
+  { id: 'content', label: 'Content', iconSrc: '/nav-content.png' },
+  { id: 'store', label: 'Store', iconSrc: '/nav-store.png', external: true },
 ];
 
-const FOOT = [{ id: 'settings', label: 'Settings', iconSrc: '/settings_icon.jpg' }];
+const FOOT = [{ id: 'settings', label: 'Settings', iconSrc: '/nav-settings.png' }];
 
 export default function SideRail({ active = 'play', onNavigate = () => {}, version }) {
   const item = ({ id, label, iconSrc, external }) => {
@@ -22,10 +22,10 @@ export default function SideRail({ active = 'play', onNavigate = () => {}, versi
           onClick={() => onNavigate(id)}
         >
           <span className="rail-glyph">
-            <img src={iconSrc} alt="" style={{ width: 18, height: 18 }} />
+            <img src={iconSrc} alt="" draggable="false" />
           </span>
           <span className="rail-label">{label}</span>
-          {external ? <span className="rail-external" aria-hidden="true" /> : null}
+          {external ? <span className="rail-external" aria-hidden="true">↗</span> : null}
         </button>
       </li>
     );
