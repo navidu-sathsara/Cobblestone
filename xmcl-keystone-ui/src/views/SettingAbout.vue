@@ -7,7 +7,7 @@
         <div class="d-flex align-center flex-wrap gap-4 mb-6">
           <v-img
             :src="logo"
-            alt="XMCL Logo"
+            alt="Cobblestone Logo"
             width="64"
             height="64"
             class="mr-4 rounded-lg flex-grow-0 flex-shrink-0"
@@ -15,11 +15,11 @@
           <div>
             <a
               class="text-h5 font-weight-bold text-decoration-none"
-              href="https://www.xmcl.app"
+              href="https://github.com/voxelum/x-minecraft-launcher"
               target="_blank"
-              v-shared-tooltip="() => 'XMCL'"
+              v-shared-tooltip="() => 'Cobblestone Launcher'"
             >
-              XMCL
+              Cobblestone Launcher
             </a>
             <div class="d-flex items-center gap-2 mt-2">
               <a

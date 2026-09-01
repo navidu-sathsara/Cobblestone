@@ -198,7 +198,7 @@ async function start() {
     async artifactBuildCompleted(context) {
       if (!context.arch) return
       if (context.target && context.target.name === 'appx') {
-        await buildAppInstaller(version, path.join(__dirname, './build/output/xmcl.appinstaller'), electronBuilderConfig.appx!.publisher!)
+        await buildAppInstaller(version, path.join(__dirname, './build/output/cobblestone.appinstaller'), electronBuilderConfig.appx!.publisher!)
       }
     },
   }

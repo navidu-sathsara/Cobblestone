@@ -1,4 +1,6 @@
 {
+    "name": "cobblestone-launcher",
+    "description": "Cobblestone Launcher - An open-source Minecraft launcher",
     "version": "0.68.1",
     "private": true,
     "license": "MIT",

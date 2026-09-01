@@ -1623,8 +1623,8 @@ theme:
   selectImage: Выберите изображение
   selectMusic: Выберите музыку
   selectVideo: Выберите видео
-  title: XMCL
-title: XMCL
+  title: Cobblestone Launcher
+title: Cobblestone Launcher
 transportType:
   host: Хост-кандидат
   prflx: Пиринг-рефлексивный кандидат

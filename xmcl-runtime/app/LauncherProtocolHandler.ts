@@ -91,7 +91,7 @@ export class LauncherProtocolHandler {
     const context: Context = {
       request: {
         method: request.method ?? 'GET',
-        url: typeof request.url === 'string' ? new URL(request.url, 'xmcl://launcher') : request.url,
+        url: typeof request.url === 'string' ? new URL(request.url, 'cobblestone://launcher') : request.url,
         headers: request.headers || {},
         body: request.body,
         signal: request.signal,

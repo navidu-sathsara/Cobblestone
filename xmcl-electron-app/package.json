@@ -1,10 +1,10 @@
 {
-    "name": "xmcl",
+    "name": "cobblestone",
     "private": true,
     "main": "./index.js",
     "version": "0.68.1",
     "author": "ci010 <cijhn@hotmail.com>",
-    "description": "XMCL - An open-source launcher for Minecraft",
+    "description": "Cobblestone Launcher - An open-source launcher for Minecraft",
     "license": "MIT",
     "engines": {
         "node": ">=22.16.0"

@@ -135,7 +135,7 @@ export class LauncherApp extends EventEmitter {
 
   get userAgent() {
     const version = IS_DEV ? '0.0.0' : this.host.getVersion()
-    return `voxelum/x_minecraft_launcher/${version} (xmcl.app)`
+    return `cobblestone_launcher/${version} (cobblestone.app)`
   }
 
   #disposed = false
@@ -150,7 +150,7 @@ export class LauncherApp extends EventEmitter {
   readonly server: Server = createServer((req, res) => {
     this.protocol.handle({
       method: req.method,
-      url: new URL(req.url ?? '/', 'xmcl://launcher'),
+      url: new URL(req.url ?? '/', 'cobblestone://launcher'),
       headers: req.headers,
       body: req,
     }).then((resp) => {
@@ -331,13 +331,13 @@ export class LauncherApp extends EventEmitter {
 
     this.logger.log(`Boot from ${this.appDataPath}`)
 
-    // register xmcl protocol
-    if (!this.host.isDefaultProtocolClient('xmcl')) {
-      const result = this.host.setAsDefaultProtocolClient('xmcl')
+    // register cobblestone protocol
+    if (!this.host.isDefaultProtocolClient('cobblestone')) {
+      const result = this.host.setAsDefaultProtocolClient('cobblestone')
       if (result) {
-        this.logger.log('Successfully register the xmcl protocol')
+        this.logger.log('Successfully register the cobblestone protocol')
       } else {
-        this.logger.log('Fail to register the xmcl protocol')
+        this.logger.log('Fail to register the cobblestone protocol')
       }
     }
 
@@ -406,14 +406,14 @@ export class LauncherApp extends EventEmitter {
           }
         }
         this.logger.log('Didn\'t find --url options')
-        const protocolOption = process.argv.find(a => a.startsWith('xmcl://'))
+        const protocolOption = process.argv.find(a => a.startsWith('cobblestone://') || a.startsWith('xmcl://'))
         if (protocolOption) {
           const u = new URL(protocolOption)
           if (u.host === 'launcher' && u.pathname === '/app' && u.searchParams.has('url')) {
             return u.searchParams.get('url') as string
           }
         }
-        this.logger.log('Didn\'t find xmcl:// protocol')
+        this.logger.log('Didn\'t find cobblestone:// or xmcl:// protocol')
       }
     }
     this.logger.log('Didn\'t find the start up url, try to load from config file.')

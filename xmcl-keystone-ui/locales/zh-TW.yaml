@@ -1676,8 +1676,8 @@ theme:
   selectImage: 選擇影象
   selectMusic: 選擇音樂
   selectVideo: 選擇影片
-  title: XMCL
-title: XMCL
+  title: Cobblestone Launcher
+title: Cobblestone Launcher
 transportType:
   host: 公網位址
   prflx: 同伴反射位址

@@ -2,10 +2,10 @@
     "name": "@xmcl/keystone-ui",
     "private": true,
     "type": "module",
-    "productName": "xmcl",
+    "productName": "cobblestone",
     "version": "0.64.1",
     "author": "ci010 <cijhn@hotmail.com>",
-    "description": "XMCL - An open-source launcher for Minecraft",
+    "description": "Cobblestone Launcher - An open-source launcher for Minecraft UI",
     "license": "MIT",
     "engines": {
         "node": ">=20"

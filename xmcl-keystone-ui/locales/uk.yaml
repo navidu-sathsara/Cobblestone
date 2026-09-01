@@ -1622,8 +1622,8 @@ theme:
   selectImage: Вибрати зображення
   selectMusic: Вибрати музику
   selectVideo: Вибрати відео
-  title: XMCL
-title: XMCL
+  title: Cobblestone Launcher
+title: Cobblestone Launcher
 transportType:
   host: Кандидат хоста
   prflx: Кандидат Peer Reflexive

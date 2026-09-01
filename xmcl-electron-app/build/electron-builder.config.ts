@@ -5,23 +5,23 @@ import type { Configuration } from 'electron-builder'
 dotenv()
 
 export const config = {
-  productName: 'XMCL',
-  appId: 'xmcl',
+  productName: 'Cobblestone Launcher',
+  appId: 'com.cobblestone.launcher',
   directories: {
     output: 'build/output',
     buildResources: 'build',
     app: '.',
   },
   protocols: {
-    name: 'XMCL',
-    schemes: ['xmcl'],
+    name: 'Cobblestone Launcher',
+    schemes: ['cobblestone', 'xmcl'],
   },
   // assign publish for auto-updater
   // set this to your own repo!
   publish: [{
     provider: 'github',
     owner: 'voxelum',
-    repo: 'x-minecraft-launcher',
+    repo: 'cobblestone',
   }],
   files: [{
     from: 'dist',
@@ -37,18 +37,18 @@ export const config = {
     to: 'agent-documents',
     filter: ['**/*.md'],
   }],
-  artifactName: 'xmcl-${version}-${platform}-${arch}.${ext}',
+  artifactName: 'cobblestone-${version}-${platform}-${arch}.${ext}',
   appx: {
-    displayName: 'XMCL',
-    applicationId: 'xmcl',
-    identityName: 'xmcl',
+    displayName: 'Cobblestone Launcher',
+    applicationId: 'cobblestone',
+    identityName: 'cobblestone',
     backgroundColor: 'transparent',
     publisher: process.env.PUBLISHER,
-    publisherDisplayName: 'CI010',
+    publisherDisplayName: 'Cobblestone',
     setBuildNumber: true,
   },
   dmg: {
-    artifactName: 'xmcl-${version}-${arch}.${ext}',
+    artifactName: 'cobblestone-${version}-${arch}.${ext}',
     contents: [
       {
         x: 410,
@@ -81,7 +81,7 @@ export const config = {
   },
   win: {
     certificateFile: undefined as string | undefined,
-    publisherName: 'CI010',
+    publisherName: 'Cobblestone',
     icon: 'icons/dark.ico',
     electronLanguages: ['en-US'],
     target: [
@@ -96,15 +96,15 @@ export const config = {
     ],
   },
   linux: {
-    executableName: 'xmcl',
+    executableName: 'cobblestone',
     electronLanguages: ['en-US'],
     desktop: {
-      MimeType: 'x-scheme-handler/xmcl',
-      StartupWMClass: 'xmcl',
+      MimeType: 'x-scheme-handler/cobblestone;x-scheme-handler/xmcl',
+      StartupWMClass: 'cobblestone',
     },
     category: 'Game',
     icon: 'icons/dark.icns',
-    artifactName: 'xmcl-${version}-${arch}.${ext}',
+    artifactName: 'cobblestone-${version}-${arch}.${ext}',
     target: [
       { target: 'deb', arch: ['x64', 'arm64'] },
       { target: 'rpm', arch: ['x64', 'arm64'] },
