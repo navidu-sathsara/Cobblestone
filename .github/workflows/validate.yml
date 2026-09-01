@@ -3,12 +3,12 @@ name: Validate
 on:
   push:
     branches:
-      - master
+      - main
     paths:
-      - 'xmcl-runtime/**'
-      - 'xmcl-runtime-api/**'
-      - 'xmcl-keystone-ui/**'
-      - 'xmcl-electron-app/**'
+      - 'cobblestone-runtime/**'
+      - 'cobblestone-runtime-api/**'
+      - 'cobblestone-keystone-ui/**'
+      - 'cobblestone-electron-app/**'
   pull_request:
 
 jobs:
@@ -35,8 +35,8 @@ jobs:
     - name: Cache Vite deps
       uses: actions/cache@v5
       with:
-        path: xmcl-keystone-ui/node_modules/.vite
-        key: ${{ runner.os }}-vite-${{ hashFiles('pnpm-lock.yaml', 'xmcl-keystone-ui/vite.config.ts') }}
+        path: cobblestone-keystone-ui/node_modules/.vite
+        key: ${{ runner.os }}-vite-${{ hashFiles('pnpm-lock.yaml', 'cobblestone-keystone-ui/vite.config.ts') }}
     - name: Install
       run: |
         pnpm install --frozen-lockfile
@@ -51,8 +51,8 @@ jobs:
         pnpm vitest run --exclude 'packages/**'
     - name: Build
       run: |
-        pnpm run --prefix xmcl-keystone-ui build
-        pnpm run --prefix xmcl-electron-app build
+        pnpm run --prefix cobblestone-keystone-ui build
+        pnpm run --prefix cobblestone-electron-app build
       env:
         BUILD_NUMBER: ${{ github.run_number }}
         NODE_ENV: production

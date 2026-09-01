@@ -1,0 +1,158 @@
+name: Release Cobblestone Launcher
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release Tag Name (e.g. v0.68.2)"
+        required: false
+        default: ""
+      prerelease:
+        description: "Mark as Pre-release"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+          - os: ubuntu-latest
+            platform: linux
+
+    env:
+      ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
+      ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Python
+        if: ${{ runner.os == 'macOS' || runner.os == 'Windows' }}
+        run: python3 -m pip install --break-system-packages --user packaging setuptools || true
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Setup Linux Dependencies
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm binutils
+
+      - name: Cache Electron Binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.cache/electron
+            ${{ github.workspace }}/.cache/electron-builder
+          key: ${{ runner.os }}-electron-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-
+
+      - name: Cache Vite Dependencies
+        uses: actions/cache@v4
+        with:
+          path: cobblestone-keystone-ui/node_modules/.vite
+          key: ${{ runner.os }}-vite-${{ hashFiles('pnpm-lock.yaml', 'cobblestone-keystone-ui/vite.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-vite-
+
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build Cobblestone UI Renderer
+        run: pnpm run --prefix cobblestone-keystone-ui build
+
+      - name: Build Cobblestone Electron App
+        run: pnpm run --prefix cobblestone-electron-app build:all
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+          NODE_OPTIONS: --max-old-space-size=32768
+          NODE_ENV: production
+          RELEASE: "true"
+          BUILD_TARGET: "all"
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_TOKEN }}
+          PUBLISHER: ${{ secrets.APPX_PUBLISHER || 'CN=Cobblestone, O=Cobblestone, C=US' }}
+
+      - name: Upload Platform Build Output
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: |
+            cobblestone-electron-app/build/output/*
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded-artifacts
+
+      - name: Prepare Release Assets
+        id: prepare
+        run: |
+          mkdir -p release-assets
+          find downloaded-artifacts -type f -exec cp -t release-assets/ {} +
+
+          cd release-assets
+          echo "### Release Files:"
+          ls -lh
+
+          sha256sum * > SHA256SUMS.txt || true
+          cd ..
+
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            TAG="v${VERSION}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Publish GitHub Release (Non-Draft)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.prepare.outputs.tag }}
+          name: Cobblestone Launcher ${{ steps.prepare.outputs.tag }}
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+          generate_release_notes: true
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

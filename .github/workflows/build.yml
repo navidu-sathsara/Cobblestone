@@ -3,12 +3,12 @@ name: Build
 on:
   push:
     branches:
-      - master
+      - main
     paths:
-      - "xmcl-runtime/**"
-      - "xmcl-runtime-api/**"
-      - "xmcl-keystone-ui/**"
-      - "xmcl-electron-app/**"
+      - "cobblestone-runtime/**"
+      - "cobblestone-runtime-api/**"
+      - "cobblestone-keystone-ui/**"
+      - "cobblestone-electron-app/**"
       - "packages/**"
       - "package.json"
       - "pnpm-lock.yaml"
@@ -51,8 +51,8 @@ jobs:
       - name: Cache Vite deps
         uses: actions/cache@v5
         with:
-          path: xmcl-keystone-ui/node_modules/.vite
-          key: ${{ runner.os }}-vite-${{ hashFiles('pnpm-lock.yaml', 'xmcl-keystone-ui/vite.config.ts') }}
+          path: cobblestone-keystone-ui/node_modules/.vite
+          key: ${{ runner.os }}-vite-${{ hashFiles('pnpm-lock.yaml', 'cobblestone-keystone-ui/vite.config.ts') }}
       - name: Install
         run: pnpm install --frozen-lockfile
       - name: Setup Linux
@@ -62,23 +62,23 @@ jobs:
           sudo apt-get install -y libarchive-tools
       - name: Build
         run: |
-          pnpm run --prefix xmcl-keystone-ui build
-          pnpm run --prefix xmcl-electron-app build
+          pnpm run --prefix cobblestone-keystone-ui build
+          pnpm run --prefix cobblestone-electron-app build
         env:
           BUILD_NUMBER: ${{ github.run_number }}
           NODE_OPTIONS: --max-old-space-size=32768
           NODE_ENV: production
           RELEASE: ${{ startsWith(github.event.head_commit.message, 'chore(release)') }}
           CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_TOKEN }}
-          PUBLISHER: CN=SignPath Foundation, O=SignPath Foundation, L=Lewes, S=Delaware, C=US
+          PUBLISHER: CN=Cobblestone, O=Cobblestone, C=US
       - name: Upload Source Maps
         if: ${{ runner.os == 'Windows' }}
         uses: actions/upload-artifact@v6
         with:
           name: sourcemap
           path: |
-            xmcl-electron-app/dist/*.js.map
-            xmcl-electron-app/dist/renderer/assets/*.js.map
+            cobblestone-electron-app/dist/*.js.map
+            cobblestone-electron-app/dist/renderer/assets/*.js.map
       - name: Upload Build
         # Windows .appx in this artifact is UNSIGNED. The `release` job
         # publishes it to a *draft* release; signing happens out-of-band via
@@ -88,42 +88,42 @@ jobs:
         with:
           name: build-${{ runner.os }}
           path: |
-            xmcl-electron-app/build/output/
+            cobblestone-electron-app/build/output/
       - name: Upload Windows Zip Build
         if: ${{ runner.os == 'Windows' }}
         uses: actions/upload-artifact@v6
         with:
           name: win-b${{ github.run_number }}
           path: |
-            xmcl-electron-app/build/output/win-unpacked/
+            cobblestone-electron-app/build/output/win-unpacked/
       - name: Upload Linux x64 Zip Build
         if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v6
         with:
           name: linux-b${{ github.run_number }}-x64
           path: |
-            xmcl-electron-app/build/output/linux-unpacked/
+            cobblestone-electron-app/build/output/linux-unpacked/
       - name: Upload Linux arm64 Zip Build
         if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v6
         with:
           name: linux-b${{ github.run_number }}-arm64
           path: |
-            xmcl-electron-app/build/output/linux-arm64-unpacked/
+            cobblestone-electron-app/build/output/linux-arm64-unpacked/
       - name: Upload Mac x64 Zip Build
         if: ${{ runner.os == 'macOS' }}
         uses: actions/upload-artifact@v6
         with:
           name: mac-b${{ github.run_number }}-x64
           path: |
-            xmcl-electron-app/build/output/mac/
+            cobblestone-electron-app/build/output/mac/
       - name: Upload Mac arm64 Zip Build
         if: ${{ runner.os == 'macOS' }}
         uses: actions/upload-artifact@v6
         with:
           name: mac-b${{ github.run_number }}-arm64
           path: |
-            xmcl-electron-app/build/output/mac-arm64/
+            cobblestone-electron-app/build/output/mac-arm64/
 
   build-arch:
     needs: build
@@ -250,7 +250,7 @@ jobs:
         env:
           CI: true
       # - name: Update Sponsor
-      #   uses: Voxelum/afdian-sponsor-action@master
+      #   uses: Voxelum/afdian-sponsor-action@main
       #   with:
       #     user-id: ${{ secrets.AFDIAN_USER_ID }}
       #     token: ${{ secrets.AFDIAN_TOKEN }}
@@ -283,7 +283,7 @@ jobs:
           name: sourcemap
           path: sourcemap/${{github.run_number}}
       - name: Upload Source Map to Azure
-        uses: ci010/upload-blob-to-azure@master
+        uses: ci010/upload-blob-to-azure@main
         env:
           AZURE_ACCOUNT_KEY: ${{ secrets.AZURE_ACCOUNT_KEY }}
         with:
@@ -357,9 +357,9 @@ jobs:
             ./packages/worker
             ./packages/wrtc-multiplayer
             ./packages/yauzl
-            ./xmcl-keystone-ui
-            ./xmcl-runtime
-            ./xmcl-runtime-api
+            ./cobblestone-keystone-ui
+            ./cobblestone-runtime
+            ./cobblestone-runtime-api
           root: "."
           stage: "release"
       - name: Create Tag
@@ -417,4 +417,4 @@ jobs:
           git config user.email cijhn@hotmail.com
           git add -A
           git commit -m "docs: Update ${{ steps.prepare_release.outputs.version }} release note"
-          git push origin HEAD:master
+          git push origin HEAD:main

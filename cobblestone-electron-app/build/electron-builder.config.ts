@@ -92,8 +92,15 @@ export const config = {
           'ia32',
         ],
       },
+      'nsis',
       'appx',
     ],
+  },
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+    artifactName: 'cobblestone-${version}-${arch}-setup.${ext}',
   },
   linux: {
     executableName: 'cobblestone',
