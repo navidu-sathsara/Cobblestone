@@ -141,7 +141,9 @@ test('hero content paints immediately on an explicit foreground layer', () => {
   const styles = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'src', 'features', 'home', 'HeroPanel.css'), 'utf8');
   assert.match(component, /className="hero"/);
   assert.doesNotMatch(component, /className="hero rise"/);
-  assert.match(styles, /\.hero\s*\{[^}]*isolation:\s*isolate/s);
-  assert.match(styles, /\.hero-inner\s*\{[^}]*z-index:\s*4/s);
+  assert.match(styles, /\.hero\s*\{[^}]*isolation:\s*isolate[^}]*flex:\s*0 0 268px[^}]*height:\s*268px/s);
+  assert.match(styles, /\.hero-inner\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*z-index:\s*4/s);
+  assert.doesNotMatch(styles, /\.hero-inner\s*\{[^}]*height:\s*100%/s);
+  assert.doesNotMatch(styles, /\.hero-stage\s*\{[^}]*height:\s*100%/s);
   assert.match(styles, /\.hero-fade\s*\{[^}]*z-index:\s*3/s);
 });
